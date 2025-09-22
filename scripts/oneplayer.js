@@ -1,8 +1,6 @@
 var canvas = document.getElementById("canvas");
 var context = canvas.getContext("2d");
 var maxHeight = 0; 
-var coverMin = 1.0;
-var coverMax = 1.0;
 var peakPosMin = 0.25;
 var peakPosMax = 0.75;
 
@@ -14,7 +12,7 @@ function limit(v, a, b) {
     return Math.max(a, Math.min(b, v)); 
 }
 
-function generateMountain(width, mountHeight) {
+function generateMountainHeight(width, mountHeight) {
     let height = [];
     height[0] = maxHeight;
     height[width - 1] = maxHeight;
@@ -50,23 +48,33 @@ function mountainGenerate(height, fillStyle, strokeStyle) {
     context.stroke();
 }
 
+window.getGroundHeightAt = function (x) {
+    x = Math.floor(limit(x, 0, canvas.width - 1));
+    return (window.terrainHeight && window.terrainHeight[x]) || maxHeight;
+};
+
+function drawTank(x, color) {
+    let groundY = getGroundHeightAt(x);
+    let tankWidth = 30;
+    let tankHeight = 15;
+    context.fillStyle = color;
+    context.fillRect(x - tankWidth/2, groundY - tankHeight, tankWidth, tankHeight);
+}
+
 function terrainGenerate() {
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
     maxHeight = canvas.height;
     context.clearRect(0, 0, canvas.width, canvas.height);
     var mountHeight = maxHeight * 0.9;
-    var height = generateMountain(canvas.width, mountHeight);
+    var height = generateMountainHeight(canvas.width, mountHeight);
     window.terrainHeight = height; 
     var fill = "darkgreen";
     var stroke = "darkgreen";
     mountainGenerate(height, fill, stroke);
+    drawTank(300, "blue");                 
+    drawTank(canvas.width - 300, "red");  
 }
 
 window.addEventListener("resize", terrainGenerate); 
 terrainGenerate();
-
-window.getGroundHeightAt = function (x) {
-    x = Math.floor(limit(x, 0, canvas.width - 1));
-    return (window.terrainHeight && window.terrainHeight[x]) || maxHeight;
-};
