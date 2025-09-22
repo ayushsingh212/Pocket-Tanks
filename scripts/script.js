@@ -1,6 +1,6 @@
 var canvas = document.getElementById("canvas");
 var context = canvas.getContext("2d");
-var maxHeight = canvas.height;
+var maxHeight = 0; 
 var coverMin = 1.0;
 var coverMax = 1.0;
 var peakPosMin = 0.25;
@@ -25,7 +25,7 @@ function generateMountain(width, mountHeight) {
         let mid = Math.floor((left + right) / 2);
         let avg = (height[left] + height[right]) / 2;
         let displacement = (Math.random() - 0.5) * rough;
-        height[mid] = avg + displacement;
+        height[mid] = limit(avg + displacement, maxHeight - mountHeight, maxHeight);
         divide(left, mid, rough / 1.8);
         divide(mid, right, rough / 1.8);
     }
@@ -33,12 +33,8 @@ function generateMountain(width, mountHeight) {
     height[peakX] = maxHeight - mountHeight;
     divide(0, peakX, mountHeight / 2);
     divide(peakX, width - 1, mountHeight / 2);
-    for (let x = 0; x < width; x++) {
-        height[x] = limit(height[x], maxHeight - mountHeight, maxHeight);
-    }
     return height;
 }
-
 
 function mountainGenerate(height, fillStyle, strokeStyle) {
     context.beginPath();
@@ -55,19 +51,22 @@ function mountainGenerate(height, fillStyle, strokeStyle) {
 }
 
 function terrainGenerate() {
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    maxHeight = canvas.height;
     context.clearRect(0, 0, canvas.width, canvas.height);
     var mountHeight = maxHeight * 0.9;
-    var peakX = Math.floor(canvas.width * randRange(peakPosMin, peakPosMax));
-    var height = generateMountain(canvas.width, mountHeight, peakX);
+    var height = generateMountain(canvas.width, mountHeight);
+    window.terrainHeight = height; 
     var fill = "darkgreen";
     var stroke = "darkgreen";
     mountainGenerate(height, fill, stroke);
 }
 
+window.addEventListener("resize", terrainGenerate); 
 terrainGenerate();
-canvas.addEventListener("click", terrainGenerate);
+
 window.getGroundHeightAt = function (x) {
-    canvas.width = window.innerWidth;
     x = Math.floor(limit(x, 0, canvas.width - 1));
     return (window.terrainHeight && window.terrainHeight[x]) || maxHeight;
 };
