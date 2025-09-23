@@ -8,7 +8,11 @@ const tankHeight = 20;
 const offsetAboveTerrain = 8;
 const gravity = 0.8;
 
-let currentTurn = "tank1"; 
+let currentTurn = "tank1";
+
+let tankChances = 0;
+
+
 let gameOver = false;
 
 
@@ -118,43 +122,76 @@ function explode(x, y, radius, shooter) {
     tank2.y = getTankY(tank2.x);
 
     if (isTankHit(tank1, x, y, radius) && shooter === "tank2") {
-        let score1 =   document.getElementById("sc1").value
-        score1 = parseInt(score1)
-console.log("I am the score one",score1)
-
-
-        document.getElementById("sc1").value = parseInt(score1)+10;
+        const sc1Input = document.getElementById("sc1");
+        sc1Input.value = parseInt(sc1Input.value || 0) + 10;
+        console.log("Tank1 hit! Score:", sc1Input.value);
     }
     if (isTankHit(tank2, x, y, radius) && shooter === "tank1") {
-         let score2 =   document.getElementById("sc2").value
-         score2 = parseInt(score2)
-        document.getElementById("sc2").value = parseInt(score2)+10;
+        const sc2Input = document.getElementById("sc2");
+        sc2Input.value = parseInt(sc2Input.value || 0) + 10;
+        console.log("Tank2 hit! Score:", sc2Input.value);
     }
 
     drawEverything();
 }
 
 function isTankHit(tank, x, y, radius) {
-    const cx = tank.x;   // horizental center
-    const cy = tank.y + tankHeight / 2;  // vertical center
-    const dx = cx - x;      // x is where explosion happening so dx give horizental distance from explosion
-    const dy = cy - y;       //  y is where explosion happening so dy give horizental distance from explosion
+    const tankLeft = tank.x - tankWidth / 2;
+    const tankRight = tank.x + tankWidth / 2;
+    const tankTop = tank.y;
+    const tankBottom = tank.y + tankHeight;
+
+    const closestX = Math.max(tankLeft, Math.min(x, tankRight));
+    const closestY = Math.max(tankTop, Math.min(y, tankBottom));
+
+    const dx = closestX - x;
+    const dy = closestY - y;
+
     return dx * dx + dy * dy <= radius * radius;
 }
+function checkGameOver() {
+    if (gameOver) return;
+
+    const sc1 = parseInt(document.getElementById("sc1").value || 0);
+    const sc2 = parseInt(document.getElementById("sc2").value || 0);
+
+    if (sc1 >= 100 || sc2 >= 100 || tankChances >= 20) {
+        gameOver = true;
+
+        let result;
+        if (sc1 > sc2) result = "Yeahh !! Player 1 Wins!";
+        else if (sc2 > sc1) result = "  Yeahhh !! Player 2 Wins!";
+        else result = " No one won  It's a Draw!";
+
+        document.getElementById("gameOverText").innerText = result;
+        document.getElementById("gameOverPopup").classList.remove("hidden");
+
+        document.getElementById("restartBtn").onclick = () => {
+            window.location.reload();
+        };
+
+        document.getElementById("exitBtn").onclick = () => {
+            window.location.href = "../html/gameover.html";
+        };
+    }
+}
+
+
 
 function fireTank(tank, angleDeg, power, shooter, onComplete) {
-
-
-  console.log("I am working ")
+     
+    tankChances++;
+    checkGameOver()
+    console.log("I am working ")
 
     const angle = angleDeg * Math.PI / 180;
     let pos = { x: tank.x, y: tank.y };
 
-     let vel;
+    let vel;
     if (shooter === "tank1") {
         vel = { x: Math.cos(angle) * power, y: -Math.sin(angle) * power };
     } else {
-        vel = { x: -Math.cos(angle) * power, y: -Math.sin(angle) * power }; 
+        vel = { x: -Math.cos(angle) * power, y: -Math.sin(angle) * power };
     }
     const handle = setInterval(() => {
         pos.x += vel.x;
@@ -210,28 +247,50 @@ window.addEventListener("resize", () => {
 
 setupAndDraw();
 
+function drawWhoseTurnItIs() {
+    const pointerHeight = 40;
+    const pointerWidth = 12;
+    const pointerColor = "yellow";
+
+    context.fillStyle = pointerColor;
+    context.strokeStyle = "black";
+    context.lineWidth = 2;
+
+    let tank = currentTurn === "tank1" ? tank1 : tank2;
+
+    context.beginPath();
+    context.moveTo(tank.x, tank.y - pointerHeight);
+    context.lineTo(tank.x - pointerWidth / 2, tank.y - pointerHeight + pointerWidth);
+    context.lineTo(tank.x + pointerWidth / 2, tank.y - pointerHeight + pointerWidth);
+    context.closePath();
+    context.fill();
+    context.stroke();
+}
 
 
 
 function drawEverything() {
     drawTerrain(window.terrainHeight);
     drawTanks();
+    drawWhoseTurnItIs();
 }
 
 fireButton.addEventListener("click", function (e) {
     if (gameOver) return;
 
-     const angleV = parseInt(document.getElementById("angleValue").value);
+    const angleV = parseInt(document.getElementById("angleValue").value);
     const powerV = parseInt(document.getElementById("powerValue").value);
     if (currentTurn === "tank1") {
-        fireTank(tank1,  angleV , powerV, "tank1", () => {
+        fireTank(tank1, angleV, powerV, "tank1", () => {
             currentTurn = "tank2";
             drawEverything();
         });
     } else {
-        fireTank(tank2, angleV , powerV, "tank2", () => {
+        fireTank(tank2, angleV, powerV, "tank2", () => {
             currentTurn = "tank1";
             drawEverything();
         });
     }
 });
+
+

@@ -1,0 +1,95 @@
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(to bottom, #1e3c72, #2a5298);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.allPlayerArea {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+  width: 90%;
+  margin-top: 50px;
+  gap: 20px;
+}
+
+.player1Weapon, .player2Weapons {
+  width: 200px;
+  height: 300px;
+  background-color: rgba(255,255,255,0.1);
+  border: 2px solid white;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  text-align: center;
+  padding: 10px;
+}
+
+.weapons {
+  width: 300px;
+  background-color: rgba(0,0,0,0.4);
+  padding: 20px;
+  border-radius: 15px;
+  border: 2px solid white;
+  text-align: center;
+}
+
+.weaponChoice {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px 0;
+}
+
+.weaponChoice li {
+  background-color: rgba(255,255,255,0.2);
+  margin: 10px 0;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.weaponChoice li:hover {
+  background-color: rgba(255,255,255,0.5);
+  transform: scale(1.05);
+}
+
+.weapons button {
+  background-color: #FFD700; 
+  border: none;
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.weapons button:hover {
+  background-color: #FFA500; 
+  transform: scale(1.05);
+}
+
+
+button[onclick] {
+  margin-top: 50px;
+  background-color: #4CAF50; 
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border-radius: 10px;
+  cursor: pointer;
+
+}
+
+
+
