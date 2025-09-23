@@ -1,4 +1,3 @@
-// ===== Power Controls =====
 const powerBar = document.getElementById("powerBar");
 const powerHandle = document.getElementById("powerHandle");
 const powerValue = document.getElementById("powerValue");
@@ -49,10 +48,8 @@ document.addEventListener("mousemove", (e) => {
   const rect = angleBar.getBoundingClientRect();
   let x = e.clientX - rect.left;
 
-  // Clamp inside bar
   x = Math.max(0, Math.min(x, rect.width));
 
-  // Move handle
   angleHandle.style.left = `${x - angleHandle.offsetWidth / 2}px`;
 
   angle = Math.round((x / rect.width) * 90);

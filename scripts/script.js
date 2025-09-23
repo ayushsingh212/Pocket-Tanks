@@ -117,18 +117,16 @@ function explode(x, y, radius, shooter) {
     tank1.y = getTankY(tank1.x);
     tank2.y = getTankY(tank2.x);
 
+    // Score update
     if (isTankHit(tank1, x, y, radius) && shooter === "tank2") {
-        let score1 =   document.getElementById("sc1").value
-        score1 = parseInt(score1)
-console.log("I am the score one",score1)
-
-
-        document.getElementById("sc1").value = parseInt(score1)+10;
+        const sc1Input = document.getElementById("sc1");
+        sc1Input.value = parseInt(sc1Input.value || 0) + 10;
+        console.log("Tank1 hit! Score:", sc1Input.value);
     }
     if (isTankHit(tank2, x, y, radius) && shooter === "tank1") {
-         let score2 =   document.getElementById("sc2").value
-         score2 = parseInt(score2)
-        document.getElementById("sc2").value = parseInt(score2)+10;
+        const sc2Input = document.getElementById("sc2");
+        sc2Input.value = parseInt(sc2Input.value || 0) + 10;
+        console.log("Tank2 hit! Score:", sc2Input.value);
     }
 
     drawEverything();
@@ -210,12 +208,32 @@ window.addEventListener("resize", () => {
 
 setupAndDraw();
 
+function drawWhoseTurnItIs() {
+    const pointerHeight = 40;
+    const pointerWidth = 12;
+    const pointerColor = "yellow";
+
+    context.fillStyle = pointerColor;
+    context.strokeStyle = "black";
+    context.lineWidth = 2;
+
+    let tank = currentTurn === "tank1" ? tank1 : tank2;
+
+    context.beginPath();
+    context.moveTo(tank.x, tank.y - pointerHeight); 
+    context.lineTo(tank.x - pointerWidth / 2, tank.y - pointerHeight + pointerWidth); 
+    context.lineTo(tank.x + pointerWidth / 2, tank.y - pointerHeight + pointerWidth); 
+    context.closePath();
+    context.fill();
+    context.stroke();
+}
 
 
 
 function drawEverything() {
     drawTerrain(window.terrainHeight);
     drawTanks();
+    drawWhoseTurnItIs();
 }
 
 fireButton.addEventListener("click", function (e) {
