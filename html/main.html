@@ -1,14 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game</title>
-    <link rel="stylesheet" href="../styles/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game</title>
+  <link rel="stylesheet" href="../styles/style.css">
 </head>
+
 <body>
-    <canvas id="canvas"> </canvas>
+  <canvas id="canvas"> </canvas>
+  <div class="gameControlArea">
+  <div class="player1ScoreBoard">
+    <div class="p1Name">Somil</div>
+   <div class="score1">Score: <input type="number" id="sc1"  value="0" readonly></div>
     
-    <script src="../scripts/script.js" ></script>
+  </div>
+
+    <div id="powerContainer">
+      <div id="powerBar">
+         <label for="powerValue">Power</label>
+        <div id="powerHandle"></div>
+      </div>
+      
+      <input id="powerValue" value="0" readonly>
+    </div>
+
+    <button class="firebtn">Fire</button>
+
+    <div id="angleContainer">
+      <div id="angleBar">
+        
+        <div id="angleHandle"></div>
+      <input id="angleValue" value="0" readonly>
+            </div> <label for="angleValue">Angle (in deg)</label>
+
+    </div>
+
+    <div class="player2ScoreBoard">
+      
+      <div class="p2Name">AYUSH</div>
+      <div class="score2">Score: <input type="number"  value="0" id="sc2" readonly></div>
+
+
+
+    </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+
+
+
+
+  <script src="../scripts/script.js" defer></script>
+  <script src="../scripts/controls.js"  defer></script>
 </body>
+
 </html>

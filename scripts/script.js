@@ -1,154 +1,243 @@
 const canvas = document.getElementById("canvas");
 const context = canvas.getContext("2d");
+const fireButton = document.querySelector(".firebtn");
 
-canvas.width = window.innerWidth;   // we are taking the innerwidth of window
-canvas.height = window.innerHeight;  // we are taking the innerheight off the window
+let maxHeight = 0;
+const tankWidth = 30;
+const tankHeight = 20;
+const offsetAboveTerrain = 8;
+const gravity = 0.8;
 
-const maxHeight = canvas.height;   // We are taking here the drawing area width
-const tankWidth = 30;          // Specifying the specific width to tank
-const tankHeight = 20;        // Specifying the height to tank
-const offsetAboveTerrain = 8;    // it will decide how above the tank will be
-const gravity = 0.4;          // the value of the gravity inn the projectile motion
+let currentTurn = "tank1"; 
+let gameOver = false;
 
 
-function randRange(a,b){ return a + Math.random()*(b-a); }   // i had made this to return a random number between a,b
 
-// it will ensure the v does not go  out of a,b
-function limit(v,a,b){ return Math.max(a, Math.min(b,v)); }
 
- // Deciding where the mountain peak will appear horizontally like in my screen if it is one it will appear between .45 to .75
+
+
+
+
+
+
+
+
+
+function randRange(a, b) { return a + Math.random() * (b - a); }
+function limit(v, a, b) { return Math.max(a, Math.min(b, v)); }
 const peakPosMin = 0.45;
 const peakPosMax = 0.75;
 
+window.terrainHeight = [];
+let tank1 = { x: 0, y: 0, color: "blue" };
+let tank2 = { x: 0, y: 0, color: "red" };
 
-// we are generating mountain of certain width and a height
 function generateMountain(width, mountHeight) {
-    let height = [];   // will be storing the height for every x coordinate
+    const height = new Array(width);
     height[0] = maxHeight;
-    height[width-1] = maxHeight;
+    height[width - 1] = maxHeight;
 
-    function divide(left,right,rough){
-        if(right-left <=1) return;  // when the 1 px will be ,it will stop
-        let mid = Math.floor((left+right)/2); 
-        let avg = (height[left]+height[right])/2;
-        let displacement = (Math.random()-0.5)*rough;
+    function divide(left, right, rough) {
+        if (right - left <= 1) return;
+        const mid = Math.floor((left + right) / 2);
+        const avg = (height[left] + height[right]) / 2;
+        const displacement = (Math.random() - 0.5) * rough;
         height[mid] = avg + displacement;
-        divide(left,mid,rough/1.8);
-        divide(mid,right,rough/1.8);
+        divide(left, mid, rough / 1.8);
+        divide(mid, right, rough / 1.8);
     }
 
-    let peakX = Math.floor(randRange(width*peakPosMin, width*peakPosMax));
+    const peakX = Math.floor(randRange(width * peakPosMin, width * peakPosMax));
     height[peakX] = maxHeight - mountHeight;
-    divide(0,peakX,mountHeight/2);
-    divide(peakX,width-1,mountHeight/2);
+    divide(0, peakX, mountHeight / 2);
+    divide(peakX, width - 1, mountHeight / 2);
 
-    for(let x=0;x<width;x++){
+    for (let x = 0; x < width; x++) {
+        if (height[x] === undefined) {
+            let l = x - 1;
+            while (l >= 0 && height[l] === undefined) l--;
+            let r = x + 1;
+            while (r < width && height[r] === undefined) r++;
+            if (l >= 0 && r < width) height[x] = (height[l] + height[r]) / 2;
+            else height[x] = maxHeight;
+        }
         height[x] = limit(height[x], maxHeight - mountHeight, maxHeight);
     }
 
-    window.terrainHeight = height; 
+    window.terrainHeight = height;
     return height;
 }
 
-function drawTerrain(height){
-    context.clearRect(0,0,canvas.width,canvas.height);
+function drawTerrain(heightArr) {
+    context.clearRect(0, 0, canvas.width, canvas.height);
     context.beginPath();
     context.moveTo(0, maxHeight);
-    for(let x=0;x<height.length;x++){
-        context.lineTo(x, height[x]);
+    for (let x = 0; x < heightArr.length; x++) {
+        context.lineTo(x, heightArr[x]);
     }
-    context.lineTo(canvas.width-1,maxHeight);
+    context.lineTo(canvas.width - 1, maxHeight);
     context.closePath();
-    context.fillStyle="darkgreen";
+    context.fillStyle = "darkgreen";
     context.fill();
-    context.strokeStyle="darkgreen";
+    context.strokeStyle = "darkgreen";
     context.stroke();
 }
 
-function getRandomTankX(startX, endX){
-    return Math.floor(randRange(startX, endX));
+function drawTank(tank) {
+    context.fillStyle = tank.color;
+    context.fillRect(Math.round(tank.x - tankWidth / 2), Math.round(tank.y), tankWidth, tankHeight);  // I drawn tank
+
+    context.fillRect(Math.round(tank.x - 2), Math.round(tank.y - 10), 4, 10); // I drawn its turret
 }
 
-function getTankY(x){
-    return terrainHeight[x] - tankHeight - offsetAboveTerrain;
+function drawTanks() {
+    drawTank(tank1);
+    drawTank(tank2);
 }
 
-const mountHeight = maxHeight*0.5;
-generateMountain(canvas.width, mountHeight);
-drawTerrain(terrainHeight);
-
-let peakIndex = terrainHeight.indexOf(Math.min(...terrainHeight));
-
-let tank1 = {x:getRandomTankX(0, peakIndex-50)};
-tank1.y = getTankY(tank1.x);
-let tank2 = {x:getRandomTankX(peakIndex+50, canvas.width-1)};
-tank2.y = getTankY(tank2.x);
-
-function drawTanks(){
-    context.fillStyle="blue";
-    context.fillRect(tank1.x - tankWidth/2, tank1.y, tankWidth, tankHeight);
-    context.fillStyle="red";
-    context.fillRect(tank2.x - tankWidth/2, tank2.y, tankWidth, tankHeight);
+function getTankY(x) {
+    const xi = Math.floor(limit(Math.round(x), 0, canvas.width - 1));
+    const ground = (window.terrainHeight && window.terrainHeight[xi]) || maxHeight;
+    return ground - tankHeight - offsetAboveTerrain;
 }
 
-function fireTank(tank, angleDeg, power, callback){
-    let angle = angleDeg * Math.PI / 180;
-    let pos = {x: tank.x, y: tank.y};
-    let vel = {
-        x: Math.cos(angle)*power,
-        y: -Math.sin(angle)*power
-    };
+function getRandomTankX(startX, endX) {
+    const min = Math.max(0, Math.floor(startX));
+    const max = Math.min(canvas.width - 1, Math.floor(endX));
+    if (max - min <= 0) return Math.floor((min + max) / 2);
+    return Math.floor(randRange(min + 10, max - 10));
+}
 
-    let projectile = setInterval(()=>{
+function explode(x, y, radius, shooter) {
+    const left = Math.max(0, Math.floor(x - radius));
+    const right = Math.min(canvas.width - 1, Math.floor(x + radius));
+    for (let i = left; i <= right; i++) {
+        const dx = i - x;
+        const inside = radius * radius - dx * dx;
+        if (inside <= 0) continue;
+        const dy = Math.sqrt(inside);
+        const newGround = Math.min(maxHeight, Math.max(0, y + dy));
+        window.terrainHeight[i] = Math.max(window.terrainHeight[i], newGround);
+    }
+
+    tank1.y = getTankY(tank1.x);
+    tank2.y = getTankY(tank2.x);
+
+    if (isTankHit(tank1, x, y, radius) && shooter === "tank2") {
+        let score1 =   document.getElementById("sc1").value
+        score1 = parseInt(score1)
+console.log("I am the score one",score1)
+
+
+        document.getElementById("sc1").value = parseInt(score1)+10;
+    }
+    if (isTankHit(tank2, x, y, radius) && shooter === "tank1") {
+         let score2 =   document.getElementById("sc2").value
+         score2 = parseInt(score2)
+        document.getElementById("sc2").value = parseInt(score2)+10;
+    }
+
+    drawEverything();
+}
+
+function isTankHit(tank, x, y, radius) {
+    const cx = tank.x;   // horizental center
+    const cy = tank.y + tankHeight / 2;  // vertical center
+    const dx = cx - x;      // x is where explosion happening so dx give horizental distance from explosion
+    const dy = cy - y;       //  y is where explosion happening so dy give horizental distance from explosion
+    return dx * dx + dy * dy <= radius * radius;
+}
+
+function fireTank(tank, angleDeg, power, shooter, onComplete) {
+
+
+  console.log("I am working ")
+
+    const angle = angleDeg * Math.PI / 180;
+    let pos = { x: tank.x, y: tank.y };
+
+     let vel;
+    if (shooter === "tank1") {
+        vel = { x: Math.cos(angle) * power, y: -Math.sin(angle) * power };
+    } else {
+        vel = { x: -Math.cos(angle) * power, y: -Math.sin(angle) * power }; 
+    }
+    const handle = setInterval(() => {
         pos.x += vel.x;
         pos.y += vel.y;
         vel.y += gravity;
 
-        drawTerrain(terrainHeight);
-        drawTanks();
+        drawEverything();
 
         context.beginPath();
-        context.arc(pos.x, pos.y, 5, 0, Math.PI*2);
+        context.arc(pos.x, pos.y, 5, 0, Math.PI * 2);
         context.fillStyle = "black";
         context.fill();
 
-        if(pos.y >= terrainHeight[Math.floor(pos.x)] || pos.x <0 || pos.x >= canvas.width){
-            clearInterval(projectile);
-            explode(pos.x, pos.y, 30); 
-            if(callback) callback();
+        const xi = Math.floor(pos.x);
+        if (xi < 0 || xi >= canvas.width || pos.y >= (window.terrainHeight[xi] || maxHeight)) {
+            clearInterval(handle);
+            explode(pos.x, pos.y, 30, shooter);
+            if (typeof onComplete === "function") onComplete();
         }
     }, 16);
+
+    return handle;
 }
 
-function explode(x, y, radius){
-    for(let i=Math.max(0, Math.floor(x-radius)); i<=Math.min(canvas.width-1, Math.floor(x+radius)); i++){
-        let dx = i - x;
-        let dy = Math.sqrt(radius*radius - dx*dx);
-        terrainHeight[i] = Math.max(terrainHeight[i], y + dy);
-    }
+
+
+
+
+function setupAndDraw() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    maxHeight = canvas.height;
+
+    const mountHeight = maxHeight * 0.5;
+
+    generateMountain(canvas.width, mountHeight);
+    drawTerrain(window.terrainHeight);
+
+    const peakIndex = window.terrainHeight.indexOf(Math.min(...window.terrainHeight));
+
+    tank1.x = getRandomTankX(20, Math.max(20, peakIndex - 50));
     tank1.y = getTankY(tank1.x);
+
+    tank2.x = getRandomTankX(Math.min(canvas.width - 20, peakIndex + 50), canvas.width - 20);
     tank2.y = getTankY(tank2.x);
-    drawTerrain(terrainHeight);
+
+    drawEverything();
+}
+
+window.addEventListener("resize", () => {
+    setupAndDraw();
+});
+
+setupAndDraw();
+
+
+
+
+function drawEverything() {
+    drawTerrain(window.terrainHeight);
     drawTanks();
 }
 
-drawTanks();
-function fireTankAt(tank, targetX, targetY){
-    const dx = targetX - tank.x;
-    const dy = tank.y - targetY; 
+fireButton.addEventListener("click", function (e) {
+    if (gameOver) return;
 
-    const angle = Math.atan2(dy, dx);
-
-    const power = Math.min(Math.sqrt(dx*dx + dy*dy)/10, 15);
-
-    fireTank(tank, angle*180/Math.PI, power);
-}
-
-
-canvas.addEventListener("click", function(e){
-    const rect = canvas.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-
-    fireTankAt(tank1, mouseX, mouseY);
+     const angleV = parseInt(document.getElementById("angleValue").value);
+    const powerV = parseInt(document.getElementById("powerValue").value);
+    if (currentTurn === "tank1") {
+        fireTank(tank1,  angleV , powerV, "tank1", () => {
+            currentTurn = "tank2";
+            drawEverything();
+        });
+    } else {
+        fireTank(tank2, angleV , powerV, "tank2", () => {
+            currentTurn = "tank1";
+            drawEverything();
+        });
+    }
 });

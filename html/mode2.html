@@ -1,68 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>2 Player Mode</title>
 </head>
+
 <body>
-   <h1>You are in 2 Player Mode</h1>
-    <h2>Please enter the player 1 info</h2>
+  <h1>You are in 2 Player Mode</h1>
+  <h2>Please enter the player 1 info</h2>
 
 
 
 
 
-<form action="">
+  <form action="">
 
-  <label for="player1_name">Player 1 Name:</label>
-    <input type="text" id="player1_name" name="player1_name" required><br><br>
-
-    <label for="player1_color">Choose Tank Color:</label>
-    <select id="player1_color" name="player1_color">
-      <option value="red">Red</option>
-      <option value="blue">Blue</option>
-      <option value="green">Green</option>
-      <option value="yellow">Yellow</option>
-    </select><br><br>
-
-
-
-
-
-
-
-
-
-
-
-
-</form>
-
-
-<h2>Please enter the player 2 info</h2>
-
-
-<form action="">
     <label for="player1_name">Player 1 Name:</label>
-    <input type="text" id="player1_name" name="player1_name" required><br><br>
+    <input type="text" id="player1Name" name="player1Name" value="Ayush Thakur" required><br><br>
 
-    <label for="player1_color">Choose Tank Color:</label>
-    <select id="player1_color" name="player1_color">
+    <label for="player1Color">Choose Tank Color:</label>
+    <select id="player1Color" name="player1Color">
+      <option value="red">Red</option>
+      <option value="blue">Blue</option>
+      <option value="green">Green</option>
+      <option value="yellow">Yellow</option>
+    </select><br><br>
+  </form>
+
+
+  <h2>Please enter the player 2 info</h2>
+
+
+  <form action="">
+    <label for="player2Name">Player 2 Name:</label>
+    <input type="text" id="player1_name" name="player2Name" required><br><br>
+
+    <label for="player2Color">Choose Tank Color:</label>
+    <select id="player2Color" name="player2Color">
       <option value="red">Red</option>
       <option value="blue">Blue</option>
       <option value="green">Green</option>
       <option value="yellow">Yellow</option>
     </select><br><br>
 
-</form>
+  </form>
 
 
 
 
-<button class="letPlay"   onclick="(()=>{
+  <button class="letPlay" onclick="(()=>{
    window.location.href='./weaponselect.html'
-})()" >Go</button>
+})()">Go</button>
+<script src="../scripts/info.js" defer></script>
 
 </body>
+
 </html>
