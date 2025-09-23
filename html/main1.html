@@ -7,17 +7,32 @@
     <link rel="stylesheet" href="../styles/style.css">
 </head>
 <body>
-    <canvas id="canvas"></canvas>
-    <div id="hud">
-        <div class="counter" id="player1">
-            <h3>Player1</h3>
-            <div class="hp" id="player1-hp">50</div>
-            </div>
-            <div class="counter" id="computer">
-            <h3>Computer</h3>
-            <div class="hp" id="computer-hp">50</div>
+    <div id="player1-hud" class="hud">
+        <div class="name">Player 1</div>
+        <div class="hp">HP: <span id="player1-hp">25</span></div>
+    </div>
+    <div id="computer-hud" class="hud">
+        <div class="name">Computer</div>
+        <div class="hp">HP: <span id="computer-hp">25</span></div>
+    </div>
+
+    <div id="controls-top">
+        <div id="left-control" class="control">
+            <label for="angleRange">Angle: <span id="angleValue">45°</span></label>
+            <input id="angleRange" type="range" min="0" max="180" step="1" />
+        </div>
+
+        <div id="center-control" class="control center">
+            <button id="fireButton" class="btn">FIRE</button>
+        </div>
+
+        <div id="right-control" class="control">
+            <label for="powerRange">Power: <span id="powerValue">5</span></label>
+            <input id="powerRange" type="range" min="1" max="20" step="0.5" />
         </div>
     </div>
+
+    <canvas id="canvas"></canvas>
     
     <script src="../scripts/oneplayer.js" ></script>
 </body>

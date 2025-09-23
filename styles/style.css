@@ -62,38 +62,95 @@ body{
   cursor: pointer;
 }
 
-
-
-
 #canvas {
   position: fixed;  
   bottom: 0;         
   left: 0;
   width: 100%;       
-  height: 75vh;     
+  height: 100vh;     
 }
 
-#hud {
-  display: flex;
-  justify-content: space-between;
-  gap: 15px;
-  max-width: 900px;
-  margin-left: 20vw;
-  margin-top: 30px;
+.hud {
+  position: fixed;
+  top: 14px;
+  z-index: 1;
+  background: rgba(0,0,0,0.4);
+  color: #fff;
+  padding: 10px;
+  border-radius: 8px;
   font-family: Arial;
 }
 
-.counter {
-  text-align: center;
+#player1-hud {
+  left: 18vw;
+  text-align: left;
+}
+
+#computer-hud {
+  right: 18vw;
+  text-align: right;
+}
+
+.hud .name { 
+  font-weight: 700; 
+  font-size: 16px; 
+}
+
+.hud .hp { 
+  margin-top: 6px;  
+  font-weight: 600; 
+  font-size: 14px; 
+}
+
+#controls-top {
+  position: fixed;
+  top: 90px; 
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 1;
+}
+
+.control {
+  pointer-events: auto; 
+  background: rgba(0,0,0,0.3);
+  color: white;
   padding: 8px;
+  border-radius: 8px;
+  font-family: Arial;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 200px;
+}
+
+.control.center {
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn {
+  background: red;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  font-weight: 700;
   border-radius: 8px;
 }
 
-.counter h3 { 
-  font-size: 14px; 
+.btn:active { 
+  transform: translateY(2px); 
 }
-.counter .hp { 
-  margin-top: 6px; 
-  font-weight: bold; 
-  font-size: 18px; 
+
+#left-control { 
+  margin-right: auto; 
+  margin-left: 14vw;
+}
+
+#right-control {
+  margin-left: auto; 
+  margin-right: 14vw;
 }
