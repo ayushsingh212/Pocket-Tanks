@@ -8,7 +8,7 @@ const tankHeight = 20;
 const offsetAboveTerrain = 8;
 const gravity = 0.8;
 
-let currentTurn = "tank1"; 
+let currentTurn = "tank1";
 let gameOver = false;
 
 
@@ -117,7 +117,6 @@ function explode(x, y, radius, shooter) {
     tank1.y = getTankY(tank1.x);
     tank2.y = getTankY(tank2.x);
 
-    // Score update
     if (isTankHit(tank1, x, y, radius) && shooter === "tank2") {
         const sc1Input = document.getElementById("sc1");
         sc1Input.value = parseInt(sc1Input.value || 0) + 10;
@@ -133,26 +132,34 @@ function explode(x, y, radius, shooter) {
 }
 
 function isTankHit(tank, x, y, radius) {
-    const cx = tank.x;   // horizental center
-    const cy = tank.y + tankHeight / 2;  // vertical center
-    const dx = cx - x;      // x is where explosion happening so dx give horizental distance from explosion
-    const dy = cy - y;       //  y is where explosion happening so dy give horizental distance from explosion
+    const tankLeft = tank.x - tankWidth / 2;
+    const tankRight = tank.x + tankWidth / 2;
+    const tankTop = tank.y;
+    const tankBottom = tank.y + tankHeight;
+
+    const closestX = Math.max(tankLeft, Math.min(x, tankRight));
+    const closestY = Math.max(tankTop, Math.min(y, tankBottom));
+
+    const dx = closestX - x;
+    const dy = closestY - y;
+
     return dx * dx + dy * dy <= radius * radius;
 }
+
 
 function fireTank(tank, angleDeg, power, shooter, onComplete) {
 
 
-  console.log("I am working ")
+    console.log("I am working ")
 
     const angle = angleDeg * Math.PI / 180;
     let pos = { x: tank.x, y: tank.y };
 
-     let vel;
+    let vel;
     if (shooter === "tank1") {
         vel = { x: Math.cos(angle) * power, y: -Math.sin(angle) * power };
     } else {
-        vel = { x: -Math.cos(angle) * power, y: -Math.sin(angle) * power }; 
+        vel = { x: -Math.cos(angle) * power, y: -Math.sin(angle) * power };
     }
     const handle = setInterval(() => {
         pos.x += vel.x;
@@ -220,9 +227,9 @@ function drawWhoseTurnItIs() {
     let tank = currentTurn === "tank1" ? tank1 : tank2;
 
     context.beginPath();
-    context.moveTo(tank.x, tank.y - pointerHeight); 
-    context.lineTo(tank.x - pointerWidth / 2, tank.y - pointerHeight + pointerWidth); 
-    context.lineTo(tank.x + pointerWidth / 2, tank.y - pointerHeight + pointerWidth); 
+    context.moveTo(tank.x, tank.y - pointerHeight);
+    context.lineTo(tank.x - pointerWidth / 2, tank.y - pointerHeight + pointerWidth);
+    context.lineTo(tank.x + pointerWidth / 2, tank.y - pointerHeight + pointerWidth);
     context.closePath();
     context.fill();
     context.stroke();
@@ -239,15 +246,15 @@ function drawEverything() {
 fireButton.addEventListener("click", function (e) {
     if (gameOver) return;
 
-     const angleV = parseInt(document.getElementById("angleValue").value);
+    const angleV = parseInt(document.getElementById("angleValue").value);
     const powerV = parseInt(document.getElementById("powerValue").value);
     if (currentTurn === "tank1") {
-        fireTank(tank1,  angleV , powerV, "tank1", () => {
+        fireTank(tank1, angleV, powerV, "tank1", () => {
             currentTurn = "tank2";
             drawEverything();
         });
     } else {
-        fireTank(tank2, angleV , powerV, "tank2", () => {
+        fireTank(tank2, angleV, powerV, "tank2", () => {
             currentTurn = "tank1";
             drawEverything();
         });
