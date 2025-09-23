@@ -16,13 +16,15 @@ function generateMountainHeight(width, mountHeight) {
     height[0] = maxHeight;
     height[width - 1] = maxHeight;
     function divide(left, right, rough) {
-    if (right - left <= 1) return;
-    let mid = Math.floor((left + right) / 2);
-    let avg = (height[left] + height[right]) / 2;
-    let displacement = (Math.random() - 0.5) * rough;
-    height[mid] = limit(avg + displacement, maxHeight - mountHeight, maxHeight);
-    divide(left, mid, rough / 1.8);
-    divide(mid, right, rough / 1.8);
+        if (right - left <= 1){
+            return;
+        }
+        let mid = Math.floor((left + right) / 2);
+        let avg = (height[left] + height[right]) / 2;
+        let displacement = (Math.random() - 0.5) * rough;
+        height[mid] = limit(avg + displacement, maxHeight - mountHeight, maxHeight);
+        divide(left, mid, rough / 1.8);
+        divide(mid, right, rough / 1.8);
     }
     let peakX = Math.floor(randRange(width * peakPosMin, width * peakPosMax));
     height[peakX] = maxHeight - mountHeight;
@@ -35,7 +37,7 @@ function mountainGenerate(heightArr, fillStyle, strokeStyle) {
     context.beginPath();
     context.moveTo(0, maxHeight);
     for (let x = 0; x < heightArr.length; x++) {
-    context.lineTo(x, heightArr[x]);
+        context.lineTo(x, heightArr[x]);
     }
     context.lineTo(heightArr.length - 1, maxHeight);
     context.closePath();
@@ -54,7 +56,36 @@ window.getGroundHeightAt = function (x) {
 const tankWidth = 30;
 const tankHeight = 15;
 const leftTankX = 300;
-const rightTankXPadding = 300; 
+const rightTankXPadding = 300;
+const damageRadius = 30;    
+const damageAmount = 5;    
+const maxHealth = 25;
+
+const players = {
+    player1: {
+        x: leftTankX,
+        color: "blue",
+        health: maxHealth
+    },
+    computer: {
+        x: canvas.width - rightTankXPadding, 
+        color: "red",
+        health: maxHealth
+    }
+};
+
+function rightTankX() {
+    return canvas.width - rightTankXPadding;
+}
+
+function tankCentre(player) {
+    const cx = player.x;
+    const cy = getGroundHeightAt(player.x) - tankHeight / 2;
+    return { 
+        x: cx, y: cy 
+    };
+}
+
 function drawTank(x, color) {
     const groundY = getGroundHeightAt(x);
     context.fillStyle = color;
@@ -99,16 +130,49 @@ class Projectile {
         this.y += this.vy * dt;
         const xi = Math.floor(limit(this.x, 0, canvas.width - 1));
         const groundY = getGroundHeightAt(xi);
+        
+        function tankHitting(projX, projY, tank) {
+            const tankTop = getGroundHeightAt(tank.x) - tankHeight;
+            const tankLeft = tank.x - tankWidth / 2;
+            const tankRight = tank.x + tankWidth / 2;
+            const tankBottom = tankTop + tankHeight;
+            return projX >= tankLeft && projX <= tankRight && projY >= tankTop && projY <= tankBottom;
+        }
+
+        for (let key in players) {
+            const player = players[key];
+            if (tankHitting(this.x, this.y, player)) {
+                this.alive = false;
+                this.hit = true;
+                this.hitX = this.x;
+                this.hitY = this.y;
+                this.damageAt(this.x, this.y);
+                this.crater(xi, 18);
+                return;
+            }
+        }
         if (this.y + this.r >= groundY) {
             this.alive = false;
             this.hit = true;
             this.hitX = this.x;
             this.hitY = groundY;
             this.crater(xi, 18);
+            this.damageAt(this.x, groundY);
         }
         if (this.x < -50 || this.x > canvas.width + 50 || this.y > canvas.height + 50) {
             this.alive = false;
         }
+    }
+
+    damageAt(cx, cy) {
+        for (let key in players) {
+            const p = players[key];
+            const center = tankCentre(p);
+            if (Math.hypot(cx - center.x, cy - center.y) <= damageRadius) {
+                p.health = Math.max(0, p.health - damageAmount);
+            }
+        }
+        updateHud();
     }
 
     crater(centerX, radius) {
@@ -119,7 +183,7 @@ class Projectile {
             let t = dist / radius;
             t = Math.max(0, Math.min(1, t));          
             const factor = 1 - (t * t * t); 
-            const lowerBy = factor * 20; 
+            const lowerBy = factor * 15; 
             window.terrainHeight[i] = Math.min(maxHeight, window.terrainHeight[i] + lowerBy); 
         }
     }
@@ -228,6 +292,9 @@ function regenerateTerrain() {
     const mountHeight = maxHeight * 0.9;
     const h = generateMountainHeight(canvas.width, mountHeight);
     window.terrainHeight = h;
+    players.computer.x = rightTankX();
+    players.player1.x = leftTankX;
+    updateHud();
 }
 
 window.addEventListener("resize", () => {
@@ -255,8 +322,8 @@ function render() {
     context.fillStyle = "white";
     context.fillRect(0, 0, canvas.width, canvas.height);
     mountainGenerate(window.terrainHeight, "darkgreen", "darkgreen");
-    drawTank(leftTankX, "blue");
-    drawTank(canvas.width - rightTankXPadding, "red");
+    drawTank(players.player1.x, players.player1.color);
+    drawTank(players.computer.x, players.computer.color);
     if (aimState.isAiming || mouseDown) {
         if (aimState.mousePos) {
             const c = aimState.shootCircle;
@@ -271,6 +338,20 @@ function render() {
     for (let p of projectiles) {
         p.draw(context);
     }
+
+    for (let key in players) {
+        const player = players[key];
+        if (player.health > 0){
+            continue;
+        }
+        context.fillStyle = "black";
+        context.font = "16px sans-serif";
+        context.textAlign = "center";
+        const tx = player.x;
+        const ty = getGroundHeightAt(player.x) - tankHeight - 45;
+        context.fillText("DESTROYED", tx, ty);
+    }
+    updateHud();
 }
 
 function loop(now) {
@@ -282,3 +363,14 @@ function loop(now) {
 }
 requestAnimationFrame(loop);
 
+function updateHud() {
+    const p1 = document.getElementById("player1-hp");
+    const cpu = document.getElementById("computer-hp");
+    if (p1) {
+        p1.innerText = players.player1.health;
+    }
+    if (cpu) {
+        cpu.innerText = players.computer.health;
+    }
+}
+updateHud();
