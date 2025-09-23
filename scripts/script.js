@@ -9,6 +9,10 @@ const offsetAboveTerrain = 8;
 const gravity = 0.8;
 
 let currentTurn = "tank1";
+
+let tankChances = 0;
+
+
 let gameOver = false;
 
 
@@ -145,11 +149,39 @@ function isTankHit(tank, x, y, radius) {
 
     return dx * dx + dy * dy <= radius * radius;
 }
+function checkGameOver() {
+    if (gameOver) return;
+
+    const sc1 = parseInt(document.getElementById("sc1").value || 0);
+    const sc2 = parseInt(document.getElementById("sc2").value || 0);
+
+    if (sc1 >= 100 || sc2 >= 100 || tankChances >= 20) {
+        gameOver = true;
+
+        let result;
+        if (sc1 > sc2) result = "🎉 Player 1 Wins!";
+        else if (sc2 > sc1) result = "🎉 Player 2 Wins!";
+        else result = "🤝 It's a Draw!";
+
+        document.getElementById("gameOverText").innerText = result;
+        document.getElementById("gameOverPopup").classList.remove("hidden");
+
+        document.getElementById("restartBtn").onclick = () => {
+            window.location.reload();
+        };
+
+        document.getElementById("exitBtn").onclick = () => {
+            window.location.href = "../html/gameover.html";
+        };
+    }
+}
+
 
 
 function fireTank(tank, angleDeg, power, shooter, onComplete) {
-
-
+     
+    tankChances++;
+    checkGameOver()
     console.log("I am working ")
 
     const angle = angleDeg * Math.PI / 180;
@@ -260,3 +292,5 @@ fireButton.addEventListener("click", function (e) {
         });
     }
 });
+
+
