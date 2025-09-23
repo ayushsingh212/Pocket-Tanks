@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>1 Player Mode</title>
+</head>
+
+<body>
+  <h1>1 Player Mode</h1>
+  <p>Welcome to the 1 Player Mode!</p>
+
+
+  <h2>Please enter the player 1 info</h2>
+
+  <form action="/submit_player1" method="post">
+    <label for="player1_name">Player 1 Name:</label>
+    <input type="text" id="player1_name" name="player1_name" required><br><br>
+
+    <label for="player1_color">Choose Tank Color:</label>
+    <select id="player1_color" name="player1_color">
+      <option value="red">Red</option>
+      <option value="blue">Blue</option>
+      <option value="green">Green</option>
+      <option value="yellow">Yellow</option>
+    </select><br><br>
+
+      <button onclick="(()=>{
+        document.location='./Tank-colour.html'
+      })()" >Go</button>
+
+
+
+    <div>Your opponent will be computer</div>
+</body>
+
+</html>
