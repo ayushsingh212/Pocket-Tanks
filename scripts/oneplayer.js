@@ -1,9 +1,8 @@
-var canvas = document.getElementById("canvas");
-var context = canvas.getContext("2d");
-var maxHeight = 0; 
-var peakPosMin = 0.25;
-var peakPosMax = 0.75;
-
+const canvas = document.getElementById("canvas");
+const context = canvas.getContext("2d");
+let maxHeight = 0;
+const peakPosMin = 0.25;
+const peakPosMax = 0.75;
 function randRange(a, b) { 
     return a + Math.random() * (b - a); 
 }
@@ -17,15 +16,13 @@ function generateMountainHeight(width, mountHeight) {
     height[0] = maxHeight;
     height[width - 1] = maxHeight;
     function divide(left, right, rough) {
-        if (right - left <= 1){
-            return;
-        }
-        let mid = Math.floor((left + right) / 2);
-        let avg = (height[left] + height[right]) / 2;
-        let displacement = (Math.random() - 0.5) * rough;
-        height[mid] = limit(avg + displacement, maxHeight - mountHeight, maxHeight);
-        divide(left, mid, rough / 1.8);
-        divide(mid, right, rough / 1.8);
+    if (right - left <= 1) return;
+    let mid = Math.floor((left + right) / 2);
+    let avg = (height[left] + height[right]) / 2;
+    let displacement = (Math.random() - 0.5) * rough;
+    height[mid] = limit(avg + displacement, maxHeight - mountHeight, maxHeight);
+    divide(left, mid, rough / 1.8);
+    divide(mid, right, rough / 1.8);
     }
     let peakX = Math.floor(randRange(width * peakPosMin, width * peakPosMax));
     height[peakX] = maxHeight - mountHeight;
@@ -34,47 +31,254 @@ function generateMountainHeight(width, mountHeight) {
     return height;
 }
 
-function mountainGenerate(height, fillStyle, strokeStyle) {
+function mountainGenerate(heightArr, fillStyle, strokeStyle) {
     context.beginPath();
     context.moveTo(0, maxHeight);
-    for (var x = 0; x < height.length; x++) {
-        context.lineTo(x, height[x]);
+    for (let x = 0; x < heightArr.length; x++) {
+    context.lineTo(x, heightArr[x]);
     }
-    context.lineTo(height.length - 1, maxHeight);
+    context.lineTo(heightArr.length - 1, maxHeight);
     context.closePath();
     context.fillStyle = fillStyle;
     context.fill();
     context.strokeStyle = strokeStyle;
     context.stroke();
 }
+window.terrainHeight = null;
 
 window.getGroundHeightAt = function (x) {
     x = Math.floor(limit(x, 0, canvas.width - 1));
     return (window.terrainHeight && window.terrainHeight[x]) || maxHeight;
 };
 
+const tankWidth = 30;
+const tankHeight = 15;
+const leftTankX = 300;
+const rightTankXPadding = 300; 
 function drawTank(x, color) {
-    let groundY = getGroundHeightAt(x);
-    let tankWidth = 30;
-    let tankHeight = 15;
+    const groundY = getGroundHeightAt(x);
     context.fillStyle = color;
-    context.fillRect(x - tankWidth/2, groundY - tankHeight, tankWidth, tankHeight);
+    context.fillRect(x - tankWidth / 2, groundY - tankHeight, tankWidth, tankHeight);
+    const gunLength = 18;
+    let gunAngle = Math.PI * 3 / 4; 
+    if (color == "blue") {
+        gunAngle = aimState.currentAngle; 
+    } 
+    const cx = x;
+    const cy = groundY - tankHeight; 
+    context.beginPath();
+    context.moveTo(cx, cy);
+    context.lineTo(cx + Math.cos(gunAngle) * gunLength, cy - Math.sin(gunAngle) * gunLength);
+    context.lineWidth = 3;
+    context.strokeStyle = "black";
+    context.stroke();
 }
 
-function terrainGenerate() {
+const gravity = 1000; 
+const projectiles = [];
+class Projectile {
+    constructor(x, y, vx, vy, color = "black", r = 5) {
+        this.x = x;
+        this.y = y;
+        this.vx = vx; 
+        this.vy = vy;
+        this.r = r;
+        this.color = color;
+        this.alive = true;
+        this.hit = false;
+        this.hitX = 0;
+        this.hitY = 0;
+    }
+
+    update(dt) {
+        if (!this.alive) {
+            return;
+        }
+        this.vy += gravity * dt;
+        this.x += this.vx * dt;
+        this.y += this.vy * dt;
+        const xi = Math.floor(limit(this.x, 0, canvas.width - 1));
+        const groundY = getGroundHeightAt(xi);
+        if (this.y + this.r >= groundY) {
+            this.alive = false;
+            this.hit = true;
+            this.hitX = this.x;
+            this.hitY = groundY;
+            this.crater(xi, 18);
+        }
+        if (this.x < -50 || this.x > canvas.width + 50 || this.y > canvas.height + 50) {
+            this.alive = false;
+        }
+    }
+
+    crater(centerX, radius) {
+        const start = Math.max(0, centerX - radius);
+        const end = Math.min(canvas.width - 1, centerX + radius);
+        for (let i = start; i <= end; i++) {
+            const dist = Math.abs(i - centerX);
+            let t = dist / radius;
+            t = Math.max(0, Math.min(1, t));          
+            const factor = 1 - (t * t * t); 
+            const lowerBy = factor * 20; 
+            window.terrainHeight[i] = Math.min(maxHeight, window.terrainHeight[i] + lowerBy); 
+        }
+    }
+
+    draw(ctx) {
+        if (!this.alive && !this.hit){
+            return;
+        }
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        if (this.hit) {
+            ctx.beginPath();
+            ctx.arc(this.hitX, this.hitY - 5, 16, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(255,140,0,0.6)";
+            ctx.fill();
+            this.hit = false;
+        }
+    }
+}
+
+function fireProjectile(startX, startY, angleRad, power) {
+    const speed = power * 70;
+    const vx = Math.cos(angleRad) * speed; 
+    const vy = -Math.sin(angleRad) * speed; 
+    const p = new Projectile(startX, startY, vx, vy, "black", 5);
+    projectiles.push(p);
+}
+
+const aimState = {
+    isAiming: false,
+    currentAngle: Math.PI / 4,
+    currentPower: 5,
+    maxPower: 15,
+    shootCircle: { 
+        x: leftTankX, y: 0, r: 75 
+    }, 
+    mousePos: null
+};
+
+function updateAimCircle() {
+    const groundY = getGroundHeightAt(leftTankX);
+    aimState.shootCircle.y = groundY - tankHeight; 
+    aimState.shootCircle.x = leftTankX;
+}
+
+function getMousePos(evt) {
+    const rect = canvas.getBoundingClientRect();
+    return { 
+        x: evt.clientX - rect.left, y: evt.clientY - rect.top 
+    };
+}
+
+function dist(a, b) {
+    return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+let mouseDown = false;
+canvas.addEventListener("mousemove", (e) => {
+    aimState.mousePos = getMousePos(e);
+    if (aimState.isAiming) {
+        const aim = aimState.shootCircle;
+        const dx = aimState.mousePos.x - aim.x;
+        const dy = aimState.mousePos.y - aim.y;
+        const angle = Math.atan2(-dy, dx);
+        aimState.currentAngle = angle;
+        const distance = Math.min(dist(aim, aimState.mousePos), aim.r);
+        aimState.currentPower = (distance / aim.r) * aimState.maxPower;
+    }
+});
+
+canvas.addEventListener("mousedown", (e) => {
+    const pos = getMousePos(e);
+    updateAimCircle();
+    if (dist(pos, aimState.shootCircle) <= aimState.shootCircle.r) {
+        aimState.isAiming = true;
+        mouseDown = true;
+    }
+});
+
+canvas.addEventListener("mouseup", (e) => {
+    if (aimState.isAiming) {
+        updateAimCircle();
+        const startX = leftTankX + Math.cos(aimState.currentAngle) * (tankWidth / 2);
+        const startY = getGroundHeightAt(leftTankX) - tankHeight - Math.sin(aimState.currentAngle) * (tankWidth / 2);
+        fireProjectile(startX, startY, aimState.currentAngle, aimState.currentPower);
+    }
+    aimState.isAiming = false;
+    mouseDown = false;
+});
+
+window.addEventListener("keydown", (e) => {
+  if (e.code === "Space") {
+    const rX = canvas.width - rightTankXPadding;
+    const startX = rX - Math.cos(Math.PI * 3 / 4) * (tankWidth / 2 + 6);
+    const startY = getGroundHeightAt(rX) - tankHeight - Math.sin(Math.PI * 3 / 4) * (tankWidth / 2 + 6) - 2;
+    fireProjectile(startX, startY, Math.PI * 3 / 4, 10);
+  }
+});
+
+function regenerateTerrain() {
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
     maxHeight = canvas.height;
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    var mountHeight = maxHeight * 0.9;
-    var height = generateMountainHeight(canvas.width, mountHeight);
-    window.terrainHeight = height; 
-    var fill = "darkgreen";
-    var stroke = "darkgreen";
-    mountainGenerate(height, fill, stroke);
-    drawTank(300, "blue");                 
-    drawTank(canvas.width - 300, "red");  
+    const mountHeight = maxHeight * 0.9;
+    const h = generateMountainHeight(canvas.width, mountHeight);
+    window.terrainHeight = h;
 }
 
-window.addEventListener("resize", terrainGenerate); 
-terrainGenerate();
+window.addEventListener("resize", () => {
+    regenerateTerrain();
+});
+regenerateTerrain();
+
+let lastTime = 0;
+function update(dt) {
+    updateAimCircle();
+    for (let p of projectiles) {
+        if (p.alive) {
+            p.update(dt);
+        }
+    }
+    for (let i = projectiles.length - 1; i >= 0; i--) {
+        if (!projectiles[i].alive && !projectiles[i].hit) {
+            projectiles.splice(i, 1);
+        }
+    }
+}
+
+function render() {
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = "white";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    mountainGenerate(window.terrainHeight, "darkgreen", "darkgreen");
+    drawTank(leftTankX, "blue");
+    drawTank(canvas.width - rightTankXPadding, "red");
+    if (aimState.isAiming || mouseDown) {
+        if (aimState.mousePos) {
+            const c = aimState.shootCircle;
+            context.beginPath();
+            context.moveTo(c.x, c.y);
+            context.lineTo(aimState.mousePos.x, aimState.mousePos.y);
+            context.lineWidth = 2;
+            context.strokeStyle = "rgba(60, 147, 36, 0.8)";
+            context.stroke();
+        }
+    }
+    for (let p of projectiles) {
+        p.draw(context);
+    }
+}
+
+function loop(now) {
+    const dt = Math.min(0.05, (now - lastTime) / 1000); 
+    update(dt);
+    render();
+    lastTime = now;
+    requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
