@@ -4,6 +4,67 @@ body{
 }
 
 
+.gameControlArea{
+  display: flex;
+  justify-content: center;
+}
+
+#angleContainer {
+  width: 300px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 20px;
+}
+
+#angleBar {
+  width: 200px;
+  height: 20px;
+  background-color: #ddd;
+  position: relative;
+  border-radius: 10px;
+}
+
+#angleHandle {
+  width: 20px;
+  height: 20px;
+  background-color: blue;
+  position: absolute;
+  top: 0;
+  left: 90px; 
+  border-radius: 50%;
+  cursor: pointer;
+}
+#powerContainer {
+  width: 300px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 20px;
+}
+
+#powerBar {
+  width: 200px;
+  height: 20px;
+  background-color: #ddd;
+  position: relative;
+  border-radius: 10px;
+}
+
+#powerHandle {
+  width: 20px;
+  height: 20px;
+  background-color: orange;
+  position: absolute;
+  top: 0;
+  left: 90px; 
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+
+
+
 #canvas {
   position: fixed;  
   bottom: 0;         
