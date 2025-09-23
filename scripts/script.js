@@ -159,9 +159,9 @@ function checkGameOver() {
         gameOver = true;
 
         let result;
-        if (sc1 > sc2) result = "🎉 Player 1 Wins!";
-        else if (sc2 > sc1) result = "🎉 Player 2 Wins!";
-        else result = "🤝 It's a Draw!";
+        if (sc1 > sc2) result = "Yeahh !! Player 1 Wins!";
+        else if (sc2 > sc1) result = "  Yeahhh !! Player 2 Wins!";
+        else result = " No one won  It's a Draw!";
 
         document.getElementById("gameOverText").innerText = result;
         document.getElementById("gameOverPopup").classList.remove("hidden");
