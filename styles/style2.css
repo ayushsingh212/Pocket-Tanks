@@ -1,0 +1,144 @@
+body{
+  margin: 0;
+  padding: 0;
+  background-image: url('1w.jpg');
+}
+
+
+.gameControlArea{
+  display: flex;
+  justify-content: center;
+}
+
+#angleContainer {
+  width: 300px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 20px;
+}
+
+#angleBar {
+  width: 200px;
+  height: 20px;
+  background-color: #ddd;
+  position: relative;
+  border-radius: 10px;
+}
+
+#angleHandle {
+  width: 20px;
+  height: 20px;
+  background-color: blue;
+  position: absolute;
+  top: 0;
+  left: 90px; 
+  border-radius: 50%;
+  cursor: pointer;
+}
+#powerContainer {
+  width: 300px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 20px;
+}
+
+#powerBar {
+  width: 200px;
+  height: 20px;
+  background-color: #ddd;
+  position: relative;
+  border-radius: 10px;
+}
+
+#powerHandle {
+  width: 20px;
+  height: 20px;
+  background-color: orange;
+  position: absolute;
+  top: 0;
+  left: 90px; 
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+
+
+
+#canvas {
+  position: fixed;  
+  bottom: 0;         
+  left: 0;
+  width: 100%;       
+  height: 75vh;     
+}
+
+#hud {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  max-width: 900px;
+  margin-left: 20vw;
+  margin-top: 30px;
+  font-family: Arial;
+}
+
+.counter {
+  text-align: center;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.counter h3 { 
+  font-size: 14px; 
+}
+.counter .hp { 
+  margin-top: 6px; 
+  font-weight: bold; 
+  font-size: 18px; 
+}
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.hidden {
+  display: none;
+}
+
+.popup-content {
+  background: #fff;
+  color: #333;
+  padding: 30px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 0 20px rgba(0,0,0,0.4);
+  animation: popIn 0.3s ease;
+}
+
+.popup-content button {
+  margin: 10px;
+  padding: 10px 20px;
+  border: none;
+  background: #3498db;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.popup-content button:hover {
+  background: #2980b9;
+}
+
+@keyframes popIn {
+  from { transform: scale(0.5); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
