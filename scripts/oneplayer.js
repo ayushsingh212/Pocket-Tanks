@@ -62,7 +62,7 @@ const leftTankX = 300;
 const rightTankXPadding = 300;
 const damageRadius = 30;
 const damageAmount = 5;
-const maxHealth = 25;
+const maxHealth = 5;
 
 const players = {
     player1: {
@@ -210,6 +210,7 @@ class Projectile {
             }
         }
         updateHud();
+        checkGameOver();
     }
 
     crater(centerX, radius) {
@@ -498,3 +499,23 @@ function updateHud() {
     }
 }
 updateHud();
+
+let gameOver = false;
+function checkGameOver() {
+    if (gameOver) {
+        return false; 
+    }
+    if (players.player1.health <= 0) {
+        gameOver = true;
+        alert("Computer Wins!");
+        location.reload(); 
+        return true;
+    }
+    if (players.computer.health <= 0) {
+        gameOver = true;
+        alert("Player 1 Wins!");
+        location.reload();
+        return true;
+    }
+    return false;
+}
