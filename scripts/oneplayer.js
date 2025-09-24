@@ -498,4 +498,3 @@ function updateHud() {
     }
 }
 updateHud();
-green

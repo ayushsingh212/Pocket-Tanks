@@ -1,49 +1,75 @@
-  * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Arial Black', Gadget, sans-serif;
-    }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Orbitron', sans-serif;
+}
 
-    body {
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      background: linear-gradient(120deg, #0f2027, #203a43, #2c5364);
-      color: #fff;
-      text-align: center;
-    }
+body {
+  background-image: url('back.png');
+  background-size: cover;
+  background-position: center ;
+  background-repeat: no-repeat;
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+  color: white;
+}
 
-    h1 {
-      font-size: 4rem;
-      margin: 0.5rem 0;
-      color: #FFD700;
-      text-shadow: 3px 3px 10px #000;
-    }
+.homepage {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+  text-align: center;
+}
 
-    button {
-      margin-top: 3rem;
-      padding: 1rem 3rem;
-      font-size: 1.8rem;
-      font-weight: bold;
-      color: #fff;
-      background: linear-gradient(45deg, #ff6a00, #ee0979);
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.4);
-      text-transform: uppercase;
-    }
+#backgroundCanvas {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
 
-    button:hover {
-      transform: scale(1.1);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.6);
-    }
+.logo h1 {
+  font-size: 6vw;
+  letter-spacing: 2px;
+  text-shadow: 3px 3px 8px rgba(0,0,0,0.6);
+}
 
-    button:active {
-      transform: scale(0.95);
-      box-shadow: 0 3px 10px rgba(0,0,0,0.3);
-    }
+.logo h1:first-child {
+  color: #ff5555; 
+}
+
+.logo h1:last-child {
+  color: #ffd700; 
+}
+
+.buttons {
+  margin-top: 40px;
+  display: flex;
+  z-index: 1;
+}
+
+.btn {
+  background: #2e2e2e;
+  color: #fff;
+  padding: 15px 40px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn:hover {
+  transform: translateY(-3px);
+  background: #ff5555;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
