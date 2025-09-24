@@ -1,144 +1,202 @@
-body{
+/* Basic body and canvas */
+body {
   margin: 0;
   padding: 0;
+  font-family: Arial, sans-serif;
   background-image: url('1w.jpg');
+  background-size: cover;
+  background-position: center;
+  color: #fff;
 }
 
-
-.gameControlArea{
-  display: flex;
-  justify-content: center;
+#canvas {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background: transparent;
+  z-index: 0;
 }
 
-#angleContainer {
-  width: 300px;
+/* Game control area */
+.gameControlArea {
+  position: relative;
+  z-index: 1;
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 10px;
-  margin: 20px;
+  padding: 15px;
+  gap: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  flex-wrap: wrap;
 }
 
+.player1ScoreBoard,
+.player2ScoreBoard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  min-width: 120px;
+}
+
+.p1Name,
+.p2Name {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.score1,
+.score2 {
+  font-size: 14px;
+}
+
+#powerContainer,
+#angleContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 150px;
+}
+
+#powerBar,
 #angleBar {
   width: 200px;
   height: 20px;
-  background-color: #ddd;
-  position: relative;
-  border-radius: 10px;
 }
 
+#powerHandle,
 #angleHandle {
-  width: 20px;
-  height: 20px;
-  background-color: blue;
-  position: absolute;
-  top: 0;
-  left: 90px; 
-  border-radius: 50%;
+  width: 100%;
   cursor: pointer;
-}
-#powerContainer {
-  width: 300px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 20px;
+  background: #ddd;
+  height: 6px;
+  border-radius: 5px;
+  outline: none;
 }
 
-#powerBar {
-  width: 200px;
-  height: 20px;
-  background-color: #ddd;
-  position: relative;
-  border-radius: 10px;
-}
-
-#powerHandle {
+#powerHandle::-webkit-slider-thumb {
+  -webkit-appearance: none;
   width: 20px;
   height: 20px;
-  background-color: orange;
-  position: absolute;
-  top: 0;
-  left: 90px; 
+  background: orange;
   border-radius: 50%;
   cursor: pointer;
 }
 
-
-
-
-#canvas {
-  position: fixed;  
-  bottom: 0;         
-  left: 0;
-  width: 100%;       
-  height: 75vh;     
+#angleHandle::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  background: blue;
+  border-radius: 50%;
+  cursor: pointer;
 }
 
-#hud {
-  display: flex;
-  justify-content: space-between;
-  gap: 15px;
-  max-width: 900px;
-  margin-left: 20vw;
-  margin-top: 30px;
-  font-family: Arial;
+#powerHandle::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: orange;
+  border-radius: 50%;
+  cursor: pointer;
 }
 
-.counter {
+#angleHandle::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: blue;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+#powerValue,
+#angleValue {
+  width: 60px;
   text-align: center;
-  padding: 8px;
-  border-radius: 8px;
+  font-size: 14px;
+  border: none;
+  border-radius: 4px;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
 }
 
-.counter h3 { 
-  font-size: 14px; 
+.firebtn {
+  padding: 10px 20px;
+  border: none;
+  background: #ff4444;
+  color: #fff;
+  font-weight: bold;
+  border-radius: 6px;
+  cursor: pointer;
 }
-.counter .hp { 
-  margin-top: 6px; 
-  font-weight: bold; 
-  font-size: 18px; 
+
+.firebtn:hover {
+  background: #cc0000;
 }
+
 .popup {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.7);
+  background: rgba(0,0,0,0.6);
   display: flex;
-  justify-content: center;
   align-items: center;
-  z-index: 1000;
+  justify-content: center;
+  z-index: 10;
 }
 
-.hidden {
+.popup.hidden {
   display: none;
 }
 
 .popup-content {
   background: #fff;
-  color: #333;
-  padding: 30px;
-  border-radius: 12px;
+  color: #000;
+  padding: 20px 30px;
+  border-radius: 10px;
   text-align: center;
-  box-shadow: 0 0 20px rgba(0,0,0,0.4);
-  animation: popIn 0.3s ease;
 }
 
 .popup-content button {
   margin: 10px;
-  padding: 10px 20px;
+  padding: 8px 16px;
   border: none;
-  background: #3498db;
-  color: white;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
-}
-.popup-content button:hover {
-  background: #2980b9;
+  font-weight: bold;
 }
 
-@keyframes popIn {
-  from { transform: scale(0.5); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+#restartBtn {
+  background: #28a745;
+  color: #fff;
+}
+
+#exitBtn {
+  background: #dc3545;
+  color: #fff;
+}
+
+@media (max-width: 768px) {
+  .gameControlArea {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #powerContainer,
+  #angleContainer {
+    width: 80%;
+  }
+
+  .firebtn {
+    width: 80%;
+    margin-top: 10px;
+  }
 }

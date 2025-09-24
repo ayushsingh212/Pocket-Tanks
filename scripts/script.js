@@ -201,7 +201,7 @@ function fireTank(tank, angleDeg, power, shooter, onComplete) {
         drawEverything();
 
         context.beginPath();
-        context.arc(pos.x, pos.y, 5, 0, Math.PI * 2);
+        context.arc(pos.x, pos.y, 10, 0, Math.PI * 2);
         context.fillStyle = "black";
         context.fill();
 
