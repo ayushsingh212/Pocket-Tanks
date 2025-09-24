@@ -5,19 +5,23 @@ const peakPosMin = 0.25;
 const peakPosMax = 0.75;
 let mountHeight = 0;
 
+// Returns a random number between a and b.
 function randRange(a, b) {
     return a + Math.random() * (b - a);
 }
 
+// Restricts a value v inside range [a, b].
 function limit(v, a, b) {
     return Math.max(a, Math.min(b, v));
 }
 
+// Mountain height ka array pane ka function
 function generateMountainHeight(width, mountHeight) {
     let height = [];
     height[0] = maxHeight;
+    // max height isliya liya hai kyunki canvas ka coordinate system inverted work krta hai 
     height[width - 1] = maxHeight;
-    function divide(left, right, rough) {
+    function divide(left, right, rough) { //midpoint displacement algo
         if (right - left <= 1){
             return;
         }
@@ -28,11 +32,12 @@ function generateMountainHeight(width, mountHeight) {
         divide(left, mid, rough / 1.8);
         divide(mid, right, rough / 1.8);
     }
+    // Choose a random peak position between 25% and 75% of the canvas width.
     let peakX = Math.floor(randRange(width * peakPosMin, width * peakPosMax));
     height[peakX] = maxHeight - mountHeight;
     divide(0, peakX, mountHeight / 2);
     divide(peakX, width - 1, mountHeight / 2);
-    window.peakX = peakX;
+    window.peakX = peakX; // global variable banayega jissa baad mai projectile logic mai use kr ske
     return height;
 }
 
@@ -49,6 +54,7 @@ function mountainGenerate(heightArr, fillStyle, strokeStyle) {
     context.strokeStyle = strokeStyle;
     context.stroke();
 }
+// terrain heights ko global variable bana diya jissa collision detection jaise function per use kr paye
 window.terrainHeight = null;
 
 window.getGroundHeightAt = function (x) {
@@ -62,7 +68,7 @@ const leftTankX = 300;
 const rightTankXPadding = 300;
 const damageRadius = 30;
 const damageAmount = 5;
-const maxHealth = 5;
+const maxHealth = 15;
 
 const players = {
     player1: {
@@ -77,6 +83,7 @@ const players = {
     }
 };
 
+// This function calculates the x-coordinate for placing the computer’s tank on the right side of the canvas.
 function rightTankX() {
     return canvas.width - rightTankXPadding;
 }
@@ -109,21 +116,24 @@ function drawTank(x, color) {
     context.stroke();
 }
 
+// gravity 1000 isliya li hai kyunki frame rate (dt) jo ayega vo mostly three unit places tk ata hai
 const gravity = 1000;
+// projectiles keeps track of all active projectiles currently in the game jissa hum unha update aur render 
+// easily krwade
 const projectiles = [];
 class Projectile {
-    constructor(x, y, vx, vy, color = "black", r = 5, firedBy = "player1") {
+    constructor(x, y, vx, vy, color, r, firedBy) {
         this.x = x;
         this.y = y;
         this.vx = vx;
         this.vy = vy;
         this.r = r;
-        this.color = color;
-        this.alive = true;
+        this.color = color; // projectile color
+        this.alive = true; // projectile abhi bhi udh rha hai kya
         this.hit = false;
         this.hitX = 0;
         this.hitY = 0;
-        this.startX = x;
+        this.startX = x; // initial horizontal position where the projectile was fired
         this.crossPeak = false;
         this.firedBy = firedBy; 
     }
@@ -132,6 +142,7 @@ class Projectile {
         if (!this.alive) {
             return;
         }
+        // v = u + gt and dist = speed x time
         this.vy += gravity * dt;
         this.x += this.vx * dt;
         this.y += this.vy * dt;
@@ -155,6 +166,7 @@ class Projectile {
             return false;
         };
 
+        // Collision detection with tanks
         for (let key in players) {
             const player = players[key];
             if (this.tankHit(this.x, this.y, player)) {
@@ -173,6 +185,8 @@ class Projectile {
                 return;
             }
         }
+
+        // Collision with terrain
         if (this.y + this.r >= groundY) {
             const willCrater = craterForm();
             this.alive = false;
@@ -181,18 +195,20 @@ class Projectile {
 
             if (willCrater) {
                 this.hit = true;
-                this.crater(xi, 18);
-                this.damageAt(this.x, groundY);
+                this.crater(xi, 18); // make a crater
+                this.damageAt(this.x, groundY); // reduce tank health
             } else {
                 this.hit = false;
             }
         }
+        //Out of bounds mai projectile bekar ho jayega
         if (this.x < -50 || this.x > canvas.width + 50 || this.y > canvas.height + 50) {
             this.alive = false;
             this.hit = false;
         }
     }
 
+    // Checks if a projectile is inside a tank’s rectangle.
     tankHit(projX, projY, tank) {
         const tankTop = getGroundHeightAt(tank.x) - tankHeight;
         const tankLeft = tank.x - tankWidth / 2;
@@ -209,10 +225,11 @@ class Projectile {
                 p.health = Math.max(0, p.health - damageAmount);
             }
         }
-        updateHud();
+        updateHud(); // update health counter
         checkGameOver();
     }
 
+    // Explosion logic (uses smoothstep function)
     crater(centerX, radius) {
         const start = Math.max(0, centerX - radius);
         const end = Math.min(canvas.width - 1, centerX + radius);
@@ -226,6 +243,7 @@ class Projectile {
         }
     }
 
+    // Draws the projectile as a circle aur jb hit hoga to circle formation hoga show krne ko
     draw(ctx) {
         if (!this.alive && !this.hit) {
             return;
@@ -264,7 +282,6 @@ const aimState = {
     },
     mousePos: null
 };
-
 aimState.controlAiming = false;
 
 const angleRange = document.getElementById("angleRange");
@@ -278,16 +295,18 @@ angleValue.innerText = angleRange.value;
 powerRange.value = aimState.currentPower;
 powerValue.innerText = Math.round(aimState.currentPower * 10) / 10;
 
+//aiming line dikhana ke liya use hota hai jb user power and angle sliders ka use karega
 function updateAimAssistFromAngle() {
     updateAimCircle();
     const a = aimState.currentAngle;
     const c = aimState.shootCircle;
     const dist = aimState.currentPower * 0.5;
     aimState.mousePos = {
-        x: c.x + Math.cos(a) * dist,
+        // polar coordinates are being used as rcos and rsin
+        x: c.x + Math.cos(a) * dist, 
         y: c.y - Math.sin(a) * dist
     };
-    aimState.controlAiming = true;
+    aimState.controlAiming = true; // Marks that the aiming is currently controlled by the sliders
 }
 
 angleRange.addEventListener("input", (e) => {
@@ -317,6 +336,7 @@ fireButton.addEventListener("click", () => {
     currentPlayer = "computer";
 });
 
+// tank position ko follow krta hai jb bhi terrain change hoti hai
 function updateAimCircle() {
     const groundY = getGroundHeightAt(leftTankX);
     aimState.shootCircle.y = groundY - tankHeight;
@@ -335,11 +355,14 @@ function dist(a, b) {
     return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
+//jb bhi hum blue tank ka pss move kr rha hai jiski vajah se kuch kuch hora hai 
+// vo sb iss function ke wajah se hori hai
 let mouseDown = false;
 canvas.addEventListener("mousemove", (e) => {
     aimState.mousePos = getMousePos(e);
     if (aimState.isAiming) {
         const aim = aimState.shootCircle;
+        // difference between the shoot circle center and the current mouse position.
         const dx = aimState.mousePos.x - aim.x;
         const dy = aimState.mousePos.y - aim.y;
         const angle = Math.atan2(-dy, dx);
@@ -353,6 +376,7 @@ canvas.addEventListener("mousemove", (e) => {
     }
 });
 
+// starts the aiming process when the player clicks inside the circle.
 canvas.addEventListener("mousedown", (e) => {
     const pos = getMousePos(e);
     updateAimCircle();
@@ -400,10 +424,11 @@ regenerateTerrain();
 
 let lastTime = 0;
 
+// computer iski vajah se shoot karega
 function computerTurn() {
     const computer = players.computer;
     const player = players.player1;
-    const targetOffset = randRange(-5, 5);
+    const targetOffset = randRange(-10, 10);
     const targetX = player.x + targetOffset;
     const targetY = getGroundHeightAt(player.x);
     const dx = targetX - computer.x;
@@ -439,7 +464,7 @@ function update(dt) {
     updateAimCircle();
 
     for (let i = projectiles.length - 1; i >= 0; i--) {
-        projectiles[i].update(dt);
+        projectiles[i].update(dt); // ye main line hai jo move krva rhi hai
         if (!projectiles[i].alive && !projectiles[i].hit) {
             projectiles.splice(i, 1);
         }
@@ -456,7 +481,7 @@ function render() {
     mountainGenerate(window.terrainHeight, "#0a2a6c", "#1e3c96");
     drawTank(players.player1.x, players.player1.color);
     drawTank(players.computer.x, players.computer.color);
-    if (aimState.isAiming || mouseDown) {
+    if (aimState.isAiming || mouseDown) {// aim assist line draw krne ke liya
         if (aimState.mousePos) {
             const c = aimState.shootCircle;
             const dx = aimState.mousePos.x - c.x;
@@ -479,8 +504,9 @@ function render() {
     updateHud();
 }
 
+//dt jo hum upar baar baar use kr rhe hai vo frame rate ke logic pai work kr rha hai
 function loop(now) {
-    const dt = Math.min(0.05, (now - lastTime) / 1000); 
+    const dt = (now - lastTime) / 1000; 
     update(dt);
     render();
     lastTime = now;
