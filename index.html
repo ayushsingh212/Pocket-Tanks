@@ -3,16 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>POCKET TANKS</title>
+  <title>Pocket Tanks</title>
   <link rel="stylesheet" href="styles/index.css">
   <link rel="shortcut icon" href="./resources/favicon.avif" type="image/x-icon">
 </head>
 <body>
-  <h1>Pocket</h1>
-  <h1>Tanks</h1>
-<button onclick="window.location.href='./html/mode.html'">
-  Go
-</button>
+  <div class="homepage">
+    <div class="logo">
+      <h1>Pocket</h1>
+      <h1>Tanks</h1>
+    </div>
 
+    <div class="buttons">
+      <button class="btn play-btn" onclick="window.location.href='./html/mode.html'">
+        Play
+      </button>
+    </div>
+    
+    <canvas id="backgroundCanvas"></canvas>
+  </div>
 </body>
 </html>

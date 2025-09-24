@@ -3,12 +3,14 @@ const context = canvas.getContext("2d");
 let maxHeight = 0;
 const peakPosMin = 0.25;
 const peakPosMax = 0.75;
-function randRange(a, b) { 
-    return a + Math.random() * (b - a); 
+let mountHeight = 0;
+
+function randRange(a, b) {
+    return a + Math.random() * (b - a);
 }
 
-function limit(v, a, b) { 
-    return Math.max(a, Math.min(b, v)); 
+function limit(v, a, b) {
+    return Math.max(a, Math.min(b, v));
 }
 
 function generateMountainHeight(width, mountHeight) {
@@ -30,6 +32,7 @@ function generateMountainHeight(width, mountHeight) {
     height[peakX] = maxHeight - mountHeight;
     divide(0, peakX, mountHeight / 2);
     divide(peakX, width - 1, mountHeight / 2);
+    window.peakX = peakX;
     return height;
 }
 
@@ -57,8 +60,8 @@ const tankWidth = 30;
 const tankHeight = 15;
 const leftTankX = 300;
 const rightTankXPadding = 300;
-const damageRadius = 30;    
-const damageAmount = 5;    
+const damageRadius = 30;
+const damageAmount = 5;
 const maxHealth = 25;
 
 const players = {
@@ -68,7 +71,7 @@ const players = {
         health: maxHealth
     },
     computer: {
-        x: canvas.width - rightTankXPadding, 
+        x: canvas.width - rightTankXPadding,
         color: "red",
         health: maxHealth
     }
@@ -81,8 +84,9 @@ function rightTankX() {
 function tankCentre(player) {
     const cx = player.x;
     const cy = getGroundHeightAt(player.x) - tankHeight / 2;
-    return { 
-        x: cx, y: cy 
+    return {
+        x: cx,
+        y: cy
     };
 }
 
@@ -91,27 +95,27 @@ function drawTank(x, color) {
     context.fillStyle = color;
     context.fillRect(x - tankWidth / 2, groundY - tankHeight, tankWidth, tankHeight);
     const gunLength = 18;
-    let gunAngle = Math.PI * 3 / 4; 
+    let gunAngle = Math.PI * 3 / 4;
     if (color == "blue") {
-        gunAngle = aimState.currentAngle; 
-    } 
+        gunAngle = aimState.currentAngle;
+    }
     const cx = x;
-    const cy = groundY - tankHeight; 
+    const cy = groundY - tankHeight;
     context.beginPath();
     context.moveTo(cx, cy);
     context.lineTo(cx + Math.cos(gunAngle) * gunLength, cy - Math.sin(gunAngle) * gunLength);
     context.lineWidth = 3;
-    context.strokeStyle = "black";
+    context.strokeStyle = "yellow";
     context.stroke();
 }
 
-const gravity = 1000; 
+const gravity = 1000;
 const projectiles = [];
 class Projectile {
-    constructor(x, y, vx, vy, color = "black", r = 5) {
+    constructor(x, y, vx, vy, color = "black", r = 5, firedBy = "player1") {
         this.x = x;
         this.y = y;
-        this.vx = vx; 
+        this.vx = vx;
         this.vy = vy;
         this.r = r;
         this.color = color;
@@ -119,6 +123,9 @@ class Projectile {
         this.hit = false;
         this.hitX = 0;
         this.hitY = 0;
+        this.startX = x;
+        this.crossPeak = false;
+        this.firedBy = firedBy; 
     }
 
     update(dt) {
@@ -128,40 +135,70 @@ class Projectile {
         this.vy += gravity * dt;
         this.x += this.vx * dt;
         this.y += this.vy * dt;
+
+        if (!this.crossPeak) {
+            if ((this.startX < window.peakX && this.x >= window.peakX) || (this.startX > window.peakX && this.x <= window.peakX) || Math.floor(this.x) == window.peakX) {
+                this.crossPeak = true;
+            }
+        }
+
         const xi = Math.floor(limit(this.x, 0, canvas.width - 1));
         const groundY = getGroundHeightAt(xi);
-        
-        function tankHitting(projX, projY, tank) {
-            const tankTop = getGroundHeightAt(tank.x) - tankHeight;
-            const tankLeft = tank.x - tankWidth / 2;
-            const tankRight = tank.x + tankWidth / 2;
-            const tankBottom = tankTop + tankHeight;
-            return projX >= tankLeft && projX <= tankRight && projY >= tankTop && projY <= tankBottom;
-        }
+
+        const craterForm = () => {
+            if (this.firedBy == "computer") {
+                return true;
+            }
+            if (this.crossPeak || xi == window.peakX) {
+                return true;
+            }
+            return false;
+        };
 
         for (let key in players) {
             const player = players[key];
-            if (tankHitting(this.x, this.y, player)) {
+            if (this.tankHit(this.x, this.y, player)) {
+                const willCrater = craterForm();
                 this.alive = false;
-                this.hit = true;
                 this.hitX = this.x;
                 this.hitY = this.y;
-                this.damageAt(this.x, this.y);
-                this.crater(xi, 18);
+
+                if (willCrater) {
+                    this.hit = true;
+                    this.crater(xi, 18);
+                    this.damageAt(this.x, this.y);
+                } else {
+                    this.hit = false;
+                }
                 return;
             }
         }
         if (this.y + this.r >= groundY) {
+            const willCrater = craterForm();
             this.alive = false;
-            this.hit = true;
             this.hitX = this.x;
             this.hitY = groundY;
-            this.crater(xi, 18);
-            this.damageAt(this.x, groundY);
+
+            if (willCrater) {
+                this.hit = true;
+                this.crater(xi, 18);
+                this.damageAt(this.x, groundY);
+            } else {
+                this.hit = false;
+            }
         }
         if (this.x < -50 || this.x > canvas.width + 50 || this.y > canvas.height + 50) {
             this.alive = false;
+            this.hit = false;
         }
+    }
+
+    tankHit(projX, projY, tank) {
+        const tankTop = getGroundHeightAt(tank.x) - tankHeight;
+        const tankLeft = tank.x - tankWidth / 2;
+        const tankRight = tank.x + tankWidth / 2;
+        const tankBottom = tankTop + tankHeight;
+        return projX >= tankLeft && projX <= tankRight && projY >= tankTop && projY <= tankBottom;
     }
 
     damageAt(cx, cy) {
@@ -181,15 +218,15 @@ class Projectile {
         for (let i = start; i <= end; i++) {
             const dist = Math.abs(i - centerX);
             let t = dist / radius;
-            t = Math.max(0, Math.min(1, t));          
-            const factor = 1 - (t * t * t); 
-            const lowerBy = factor * 15; 
-            window.terrainHeight[i] = Math.min(maxHeight, window.terrainHeight[i] + lowerBy); 
+            t = Math.max(0, Math.min(1, t));
+            const factor = 1 - (t * t * t);
+            const lowerBy = factor * 15;
+            window.terrainHeight[i] = Math.min(maxHeight, window.terrainHeight[i] + lowerBy);
         }
     }
 
     draw(ctx) {
-        if (!this.alive && !this.hit){
+        if (!this.alive && !this.hit) {
             return;
         }
         ctx.beginPath();
@@ -206,11 +243,11 @@ class Projectile {
     }
 }
 
-function fireProjectile(startX, startY, angleRad, power) {
+function fireProjectile(startX, startY, angleRad, power, shooter) {
     const speed = power * 70;
-    const vx = Math.cos(angleRad) * speed; 
-    const vy = -Math.sin(angleRad) * speed; 
-    const p = new Projectile(startX, startY, vx, vy, "black", 5);
+    const vx = Math.cos(angleRad) * speed;
+    const vy = -Math.sin(angleRad) * speed;
+    const p = new Projectile(startX, startY, vx, vy, "cyan", 5, shooter);
     projectiles.push(p);
 }
 
@@ -218,23 +255,78 @@ const aimState = {
     isAiming: false,
     currentAngle: Math.PI / 4,
     currentPower: 5,
-    maxPower: 15,
-    shootCircle: { 
-        x: leftTankX, y: 0, r: 75 
-    }, 
+    maxPower: 20,
+    shootCircle: {
+        x: leftTankX,
+        y: 0,
+        r: 300
+    },
     mousePos: null
 };
 
+aimState.controlAiming = false;
+
+const angleRange = document.getElementById("angleRange");
+const powerRange = document.getElementById("powerRange");
+const angleValue = document.getElementById("angleValue");
+const powerValue = document.getElementById("powerValue");
+const fireButton = document.getElementById("fireButton");
+
+angleRange.value = Math.round((aimState.currentAngle * 180) / Math.PI);
+angleValue.innerText = angleRange.value;
+powerRange.value = aimState.currentPower;
+powerValue.innerText = Math.round(aimState.currentPower * 10) / 10;
+
+function updateAimAssistFromAngle() {
+    updateAimCircle();
+    const a = aimState.currentAngle;
+    const c = aimState.shootCircle;
+    const dist = aimState.currentPower * 0.5;
+    aimState.mousePos = {
+        x: c.x + Math.cos(a) * dist,
+        y: c.y - Math.sin(a) * dist
+    };
+    aimState.controlAiming = true;
+}
+
+angleRange.addEventListener("input", (e) => {
+    const deg = Number(e.target.value);
+    angleValue.innerText = deg;
+    aimState.currentAngle = deg * Math.PI / 180;
+    updateAimAssistFromAngle();
+});
+
+powerRange.addEventListener("input", (e) => {
+    const p = Number(e.target.value);
+    powerValue.innerText = Math.round(p * 10) / 10;
+    aimState.currentPower = p;
+    updateAimAssistFromAngle();
+});
+
+fireButton.addEventListener("click", () => {
+    if (currentPlayer !== "player1") {
+        return;
+    }
+    updateAimCircle();
+    const startX = leftTankX + Math.cos(aimState.currentAngle) * (tankWidth / 2);
+    const startY = getGroundHeightAt(leftTankX) - tankHeight - Math.sin(aimState.currentAngle) * (tankWidth / 2);
+    fireProjectile(startX, startY, aimState.currentAngle, aimState.currentPower, "player1");
+    aimState.controlAiming = false;
+    aimState.mousePos = null;
+    currentPlayer = "computer";
+});
+
 function updateAimCircle() {
     const groundY = getGroundHeightAt(leftTankX);
-    aimState.shootCircle.y = groundY - tankHeight; 
+    aimState.shootCircle.y = groundY - tankHeight;
     aimState.shootCircle.x = leftTankX;
 }
 
 function getMousePos(evt) {
     const rect = canvas.getBoundingClientRect();
-    return { 
-        x: evt.clientX - rect.left, y: evt.clientY - rect.top 
+    return {
+        x: evt.clientX - rect.left,
+        y: evt.clientY - rect.top
     };
 }
 
@@ -253,6 +345,10 @@ canvas.addEventListener("mousemove", (e) => {
         aimState.currentAngle = angle;
         const distance = Math.min(dist(aim, aimState.mousePos), aim.r);
         aimState.currentPower = (distance / aim.r) * aimState.maxPower;
+        angleRange.value = Math.round((angle * 180) / Math.PI);
+        angleValue.innerText = angleRange.value;
+        powerRange.value = aimState.currentPower;
+        powerValue.innerText = Math.round(aimState.currentPower * 10) / 10;
     }
 });
 
@@ -267,34 +363,33 @@ canvas.addEventListener("mousedown", (e) => {
 
 canvas.addEventListener("mouseup", (e) => {
     if (aimState.isAiming) {
-        updateAimCircle();
-        const startX = leftTankX + Math.cos(aimState.currentAngle) * (tankWidth / 2);
-        const startY = getGroundHeightAt(leftTankX) - tankHeight - Math.sin(aimState.currentAngle) * (tankWidth / 2);
-        fireProjectile(startX, startY, aimState.currentAngle, aimState.currentPower);
+        const aim = aimState.shootCircle;
+        const dx = aimState.mousePos.x - aim.x;
+        const dy = aimState.mousePos.y - aim.y;
+        const angle = Math.atan2(-dy, dx);
+        aimState.currentAngle = angle;
+        const length = Math.min(dist(aim, aimState.mousePos), aim.r);
+        aimState.mousePos = {
+            x: aim.x + Math.cos(angle) * length,
+            y: aim.y - Math.sin(angle) * length
+        };
     }
     aimState.isAiming = false;
     mouseDown = false;
-});
-
-window.addEventListener("keydown", (e) => {
-  if (e.code === "Space") {
-    const rX = canvas.width - rightTankXPadding;
-    const startX = rX - Math.cos(Math.PI * 3 / 4) * (tankWidth / 2 + 6);
-    const startY = getGroundHeightAt(rX) - tankHeight - Math.sin(Math.PI * 3 / 4) * (tankWidth / 2 + 6) - 2;
-    fireProjectile(startX, startY, Math.PI * 3 / 4, 10);
-  }
 });
 
 function regenerateTerrain() {
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
     maxHeight = canvas.height;
-    const mountHeight = maxHeight * 0.9;
+    const canvaRatio = 0.75;
+    mountHeight = canvas.height * canvaRatio * 0.9;
     const h = generateMountainHeight(canvas.width, mountHeight);
     window.terrainHeight = h;
     players.computer.x = rightTankX();
     players.player1.x = leftTankX;
     updateHud();
+    currentPlayer = "player1";
 }
 
 window.addEventListener("resize", () => {
@@ -303,33 +398,75 @@ window.addEventListener("resize", () => {
 regenerateTerrain();
 
 let lastTime = 0;
-function update(dt) {
-    updateAimCircle();
-    for (let p of projectiles) {
-        if (p.alive) {
-            p.update(dt);
+
+function computerTurn() {
+    const computer = players.computer;
+    const player = players.player1;
+    const targetOffset = randRange(-5, 5);
+    const targetX = player.x + targetOffset;
+    const targetY = getGroundHeightAt(player.x);
+    const dx = targetX - computer.x;
+    const angleRad = Math.PI * 3 / 4;
+    let bestPower = 0;
+    let minError = Infinity;
+    for (let power = 5; power <= 20; power += 0.5) {
+        const speed = power * 70;
+        const vx = Math.cos(angleRad) * speed;
+        const vy = -Math.sin(angleRad) * speed;
+        let t;
+        if (vx == 0) { 
+            t = 0;
+        }
+        else {
+            t = dx / vx;
+        }
+        const yest = getGroundHeightAt(computer.x) - tankHeight - Math.sin(angleRad) * (tankWidth / 2) + vy * t + 0.5 * gravity * t * t;
+        const error = Math.abs(yest - targetY);
+        if (error < minError) {
+            minError = error;
+            bestPower = power;
         }
     }
+    const startX = computer.x - Math.cos(angleRad) * (tankWidth / 2);
+    const startY = getGroundHeightAt(computer.x) - tankHeight - Math.sin(angleRad) * (tankWidth / 2);
+    fireProjectile(startX, startY, angleRad, bestPower, "computer");
+    currentPlayer = "player1";
+}
+
+
+function update(dt) {
+    updateAimCircle();
+
     for (let i = projectiles.length - 1; i >= 0; i--) {
+        projectiles[i].update(dt);
         if (!projectiles[i].alive && !projectiles[i].hit) {
             projectiles.splice(i, 1);
+        }
+    }
+    if (projectiles.length == 0) {
+        if (currentPlayer == "computer") {
+            computerTurn();
         }
     }
 }
 
 function render() {
     context.clearRect(0, 0, canvas.width, canvas.height);
-    context.fillStyle = "white";
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    mountainGenerate(window.terrainHeight, "darkgreen", "darkgreen");
+    mountainGenerate(window.terrainHeight, "#0a2a6c", "#1e3c96");
     drawTank(players.player1.x, players.player1.color);
     drawTank(players.computer.x, players.computer.color);
     if (aimState.isAiming || mouseDown) {
         if (aimState.mousePos) {
             const c = aimState.shootCircle;
+            const dx = aimState.mousePos.x - c.x;
+            const dy = aimState.mousePos.y - c.y;
+            const distMouse = Math.hypot(dx, dy);
+            const maxDist = Math.min(distMouse, aimState.shootCircle.r);
+            const endX = c.x + (dx / distMouse) * maxDist;
+            const endY = c.y + (dy / distMouse) * maxDist;
             context.beginPath();
             context.moveTo(c.x, c.y);
-            context.lineTo(aimState.mousePos.x, aimState.mousePos.y);
+            context.lineTo(endX, endY);
             context.lineWidth = 2;
             context.strokeStyle = "rgba(60, 147, 36, 0.8)";
             context.stroke();
@@ -337,19 +474,6 @@ function render() {
     }
     for (let p of projectiles) {
         p.draw(context);
-    }
-
-    for (let key in players) {
-        const player = players[key];
-        if (player.health > 0){
-            continue;
-        }
-        context.fillStyle = "black";
-        context.font = "16px sans-serif";
-        context.textAlign = "center";
-        const tx = player.x;
-        const ty = getGroundHeightAt(player.x) - tankHeight - 45;
-        context.fillText("DESTROYED", tx, ty);
     }
     updateHud();
 }
@@ -365,12 +489,12 @@ requestAnimationFrame(loop);
 
 function updateHud() {
     const p1 = document.getElementById("player1-hp");
-    const cpu = document.getElementById("computer-hp");
+    const comp = document.getElementById("computer-hp");
     if (p1) {
-        p1.innerText = players.player1.health;
+        p1.innerText = players.player1.health + " / " + maxHealth;
     }
-    if (cpu) {
-        cpu.innerText = players.computer.health;
+    if (comp) {
+        comp.innerText = players.computer.health + " / " + maxHealth;
     }
 }
 updateHud();

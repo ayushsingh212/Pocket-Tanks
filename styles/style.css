@@ -1,6 +1,7 @@
 body{
   margin: 0;
   padding: 0;
+  background-image: url('1w.jpg');
 }
 
 
@@ -62,82 +63,111 @@ body{
   cursor: pointer;
 }
 
-
-
-
 #canvas {
   position: fixed;  
   bottom: 0;         
   left: 0;
   width: 100%;       
-  height: 75vh;     
+  height: 100vh;   
+  background: transparent; 
+  z-index: 0;        
 }
 
-#hud {
+.hud {
+  position: fixed;
+  top: 14px;
+  z-index: 1;
+  background: rgba(0, 0, 0, 0.4);
+  color: #fff;
+  padding: 10px;
+  border-radius: 8px;
+  font-family: 'Orbitron';
+}
+
+#player1-hud {
+  left: 18vw;
+  text-align: left;
+}
+
+#computer-hud {
+  right: 18vw;
+  text-align: right;
+}
+
+.hud .name {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.hud .hp {
+  margin-top: 6px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+#controls-top {
+  position: fixed;
+  top: 90px;
+  width: 100%;
   display: flex;
   justify-content: space-between;
-  gap: 15px;
-  max-width: 900px;
-  margin-left: 20vw;
-  margin-top: 30px;
-  font-family: Arial;
-}
-
-.counter {
-  text-align: center;
-  padding: 8px;
-  border-radius: 8px;
-}
-
-.counter h3 { 
-  font-size: 14px; 
-}
-.counter .hp { 
-  margin-top: 6px; 
-  font-weight: bold; 
-  font-size: 18px; 
-}
-.popup {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.7);
-  display: flex;
-  justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 1;
 }
 
-.hidden {
-  display: none;
-}
-
-.popup-content {
-  background: #fff;
-  color: #333;
-  padding: 30px;
-  border-radius: 12px;
-  text-align: center;
-  box-shadow: 0 0 20px rgba(0,0,0,0.4);
-  animation: popIn 0.3s ease;
-}
-
-.popup-content button {
-  margin: 10px;
-  padding: 10px 20px;
-  border: none;
-  background: #3498db;
+.control {
+  pointer-events: auto;
+  background: rgba(0, 0, 0, 0.6);
   color: white;
-  border-radius: 8px;
-  cursor: pointer;
-}
-.popup-content button:hover {
-  background: #2980b9;
+  padding: 12px;
+  border-radius: 10px;
+  font-family: 'Orbitron', cursive;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 240px;
 }
 
-@keyframes popIn {
-  from { transform: scale(0.5); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+.control.center {
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none;
+}
+
+.btn {
+  background: #ff5555;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  font-weight: 700;
+  border-radius: 8px;
+  font-family: 'Orbitron';
+  transition: all 0.1s ease-in-out;
+}
+
+.btn:hover {
+  transform: translateY(2px);
+}
+
+.btn:active {
+  transform: translateY(2px);
+  box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+#left-control {
+  margin-right: auto;
+  margin-left: 14vw;
+}
+
+#right-control {
+  margin-left: auto;
+  margin-right: 14vw;
+}
+
+.control label {
+  color: #fff;
+  font-size: 14px;
+  font-weight: bold;
 }
