@@ -181,6 +181,8 @@ class Projectile {
         this.startX = x; // initial horizontal position where the projectile was fired
         this.crossPeak = false;
         this.firedBy = firedBy; 
+          this.explosionFrame = 0;
+        this.trail = [];
     }
 
     update(dt) {
@@ -228,20 +230,16 @@ class Projectile {
         }
 
         // Collision with terrain
-        if (this.y + this.r >= groundY) {
-            const willCrater = craterForm();
-            this.alive = false;
-            this.hitX = this.x;
-            this.hitY = groundY;
+     if (this.y + this.r >= groundY) {
+    this.alive = false;
+    this.hitX = this.x;
+    this.hitY = groundY;
+    this.hit = true;
 
-            if (willCrater) {
-                this.hit = true;
-                this.crater(xi, 18); // make a crater
-                this.damageAt(this.x, this.y); // reduce tank health
-            } else {
-                this.hit = false;
-            }
-        }
+    this.crater(Math.floor(this.x), 25); // terrain destruction
+    this.damageAt(this.x, this.y); // damage tanks in radius
+}
+
         //Out of bounds mai projectile bekar ho jayega
         if (this.x < -50 || this.x > canvas.width + 50 || this.y > canvas.height + 50) {
             this.alive = false;
@@ -249,7 +247,6 @@ class Projectile {
         }
     }
 
-    // Checks if a projectile is inside a tank’s rectangle.
     tankHit(projX, projY, tank) {
         const tankTop = getGroundHeightAt(tank.x) - tankHeight;
         const tankLeft = tank.x - tankWidth / 2;
@@ -257,7 +254,31 @@ class Projectile {
         const tankBottom = tankTop + tankHeight;
         return projX >= tankLeft && projX <= tankRight && projY >= tankTop && projY <= tankBottom;
     }
+         handleTankCollision(player) {
+                this.alive = false;
+                this.hitX = this.x;
+                this.hitY = this.y;
+                this.hit = true;
+                this.explosionFrame = 0;
 
+                player.health = Math.max(0, player.health - damageAmount);
+                
+                const xi = Math.floor(this.x);
+                this.crater(xi, 20);
+                
+                updateHud();
+                checkGameOver();
+            }
+      handleTerrainCollision(xi, groundY) {
+                this.alive = false;
+                this.hitX = this.x;
+                this.hitY = groundY;
+                this.hit = true;
+                this.explosionFrame = 0;
+                
+                this.crater(Math.floor(this.x), 25);
+                this.damageAt(this.x, this.y);
+            }
   damageAt(cx, cy) {
                 for (let key in players) {
                     const p = players[key];
@@ -271,19 +292,36 @@ class Projectile {
                 checkGameOver();
             }
 
-    // Explosion logic (uses smoothstep function)
-    crater(centerX, radius) {
-        const start = Math.max(0, centerX - radius);
-        const end = Math.min(canvas.width - 1, centerX + radius);
-        for (let i = start; i <= end; i++) {
-            const dist = Math.abs(i - centerX);
-            let t = dist / radius;
-            t = Math.max(0, Math.min(1, t));
-            const factor = 1 - (t * t * t);
-            const lowerBy = factor * 15;
-            window.terrainHeight[i] = Math.min(maxHeight, window.terrainHeight[i] + lowerBy);
-        }
+  crater(centerX, radius) {
+    for (let x = Math.max(0, centerX - radius); x <= Math.min(canvas.width - 1, centerX + radius); x++) {
+        const dx = x - centerX;
+        if (Math.abs(dx) > radius) continue;
+        const h = window.terrainHeight[x];
+        const dy = Math.sqrt(radius*radius - dx*dx);
+        window.terrainHeight[x] = Math.min(maxHeight, h + dy);
     }
+}
+
+
+            smoothCrater(centerX, radius) {
+                const smoothRadius = radius + 10;
+                const start = Math.max(0, centerX - smoothRadius);
+                const end = Math.min(canvas.width - 1, centerX + smoothRadius);
+                
+                for (let x = start; x <= end; x++) {
+                    if (x > 1 && x < window.terrainHeight.length - 2) {
+                        // 5-point smoothing for better results
+                        const avg = (
+                            window.terrainHeight[x-2] + 
+                            window.terrainHeight[x-1] + 
+                            window.terrainHeight[x] + 
+                            window.terrainHeight[x+1] + 
+                            window.terrainHeight[x+2]
+                        ) / 5;
+                        window.terrainHeight[x] = avg;
+                    }
+                }
+            }
 
     // Draws the projectile as a circle aur jb hit hoga to circle formation hoga show krne ko
     draw(ctx) {
@@ -302,6 +340,32 @@ class Projectile {
             this.hit = false;
         }
     }
+          drawExplosion(ctx) {
+    if (!this.hit && this.explosionFrame === 0) return;
+
+    const frames = 15;
+    const progress = this.explosionFrame / frames;
+    const alpha = Math.max(0, 1 - progress);
+    const radius = 15 + this.explosionFrame * 3;
+
+    ctx.beginPath();
+    ctx.arc(this.hitX, this.hitY, radius, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 165, 0, ${alpha})`;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(this.hitX, this.hitY, radius * 0.7, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 255, 0, ${alpha * 0.8})`;
+    ctx.fill();
+
+    this.explosionFrame++;
+    if (this.explosionFrame > frames) {
+        this.hit = false;
+        this.explosionFrame = 0;
+    }
+}
+
+        
 }
 
 function fireProjectile(startX, startY, angleRad, power, shooter) {
