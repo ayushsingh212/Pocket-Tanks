@@ -308,16 +308,24 @@ function updateAimAssistFromAngle() {
     };
     aimState.controlAiming = true; // Marks that the aiming is currently controlled by the sliders
 }
-
+  
+let deg =45;
 angleRange.addEventListener("input", (e) => {
-    const deg = Number(e.target.value);
+     deg = Number(e.target.value);
     angleValue.innerText = deg;
     aimState.currentAngle = deg * Math.PI / 180;
     updateAimAssistFromAngle();
 });
 
+// document.addEventListener("keydown")
+
+
+
+
+
+  let p = 5;
 powerRange.addEventListener("input", (e) => {
-    const p = Number(e.target.value);
+     p = Number(e.target.value);
     powerValue.innerText = Math.round(p * 10) / 10;
     aimState.currentPower = p;
     updateAimAssistFromAngle();
@@ -335,6 +343,96 @@ fireButton.addEventListener("click", () => {
     aimState.mousePos = null;
     currentPlayer = "computer";
 });
+
+
+
+// space button se bhi fire hoga ab for butter user experience
+document.addEventListener("keydown",(e)=>{
+
+if(e.key === " ")
+{
+  if (currentPlayer !== "player1") {
+        return;
+    }
+    updateAimCircle();
+    const startX = leftTankX + Math.cos(aimState.currentAngle) * (tankWidth / 2);
+    const startY = getGroundHeightAt(leftTankX) - tankHeight - Math.sin(aimState.currentAngle) * (tankWidth / 2);
+    fireProjectile(startX, startY, aimState.currentAngle, aimState.currentPower, "player1");
+    aimState.controlAiming = false;
+    aimState.mousePos = null;
+    currentPlayer = "computer";
+
+
+
+}
+ if (e.key==="ArrowLeft")
+{   
+
+    if(deg === 0)
+    {
+        return;
+    }
+   console.log("I am the value of the degree",deg)
+    deg = parseInt(deg)
+    deg -=   1;
+      angleRange.value = deg;
+     angleValue.innerText = parseInt(deg);
+    aimState.currentAngle = deg * Math.PI / 180;
+    updateAimAssistFromAngle();
+
+}
+if(e.key==="ArrowRight")
+{
+ if(deg === 180)
+    {
+        return;
+    }
+   console.log("I am the value of the degree",deg)
+    deg = parseInt(deg)
+    deg +=   1;
+          angleRange.value = deg;
+
+     angleValue.innerText = parseInt(deg);
+    aimState.currentAngle = deg * Math.PI / 180;
+    updateAimAssistFromAngle();
+
+}
+if(e.key ==="ArrowUp")
+{
+   
+    if(p === 20)
+    {
+        return;
+    }
+
+  p += 0.25;
+  powerRange.value = parseInt(p);
+    powerValue.innerText = Math.round(p * 10) / 10;
+    aimState.currentPower = p;
+    updateAimAssistFromAngle();
+
+}
+if(e.key ==="ArrowDown")
+{
+  if(p ===0)
+    {
+        return;
+    }
+
+  p -= 0.25;
+  powerRange.value = parseInt(p);
+    powerValue.innerText = Math.round(p * 10) / 10;
+    aimState.currentPower = p;
+    updateAimAssistFromAngle();
+
+
+
+}
+
+})   // sabhi event listener add hogye yha pe
+
+
+
 
 // tank position ko follow krta hai jb bhi terrain change hoti hai
 function updateAimCircle() {

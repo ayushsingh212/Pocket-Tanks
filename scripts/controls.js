@@ -9,3 +9,15 @@ angleValue.value = angleSlider.value;
 
 powerSlider.addEventListener("input", () => powerValue.value = powerSlider.value);
 angleSlider.addEventListener("input", () => angleValue.value = angleSlider.value);
+
+
+
+
+
+
+
+
+
+
+
+
