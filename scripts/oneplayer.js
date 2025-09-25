@@ -7,28 +7,18 @@ let mountHeight = 0;
 const tankImg = new Image();
 tankImg.src = "../styles/tank1.png";
 
-
 let nameV = document.querySelector(".name");
 let playerHp = document.querySelector("#player1-hp");
 let computerHp = document.querySelector("#computer-hp");
 
-
-
 const playersInfo  = JSON.parse(localStorage.getItem("players")) || [];
 
-
 let length = playersInfo.length-1;
-   
+
 const currentUser  =  playersInfo[length];
 nameV.innerText = `${currentUser["name"]}`
 playerHp.innerText =`${currentUser["health"]}`
 computerHp.innerText = `${currentUser["health"]}`
-
-
-
-
-
-
 
 // Returns a random number between a and b.
 function randRange(a, b) {
@@ -87,6 +77,15 @@ window.getGroundHeightAt = function (x) {
     return (window.terrainHeight && window.terrainHeight[x]) || maxHeight;
 };
 
+function getGroundAngleAt(x) {
+    const delX = 2;
+    const x1 = Math.max(0, x - delX);
+    const y1 = getGroundHeightAt(x1);
+    const x2 = Math.min(canvas.width - 1, x + delX);
+    const y2 = getGroundHeightAt(x2);
+    return Math.atan2(y2 - y1, x2 - x1);
+}
+
 const tankWidth = 80;
 const tankHeight = 50;
 const leftTankX = 300;
@@ -99,13 +98,15 @@ const players = {
     player1: {
         x: leftTankX,
         color: "blue",
-        health: maxHealth
+        health: maxHealth,
+        angle: 0 
     },
     computer: {
         x: canvas.width - rightTankXPadding,
         color: "red",
         health: maxHealth,
-        angle: Math.PI * 3 / 4
+        angle: 0, 
+        gunAngle: Math.PI * 3 / 4 
     }
 };
 
@@ -125,41 +126,47 @@ function tankCentre(player) {
     };
 }
 
-
-function drawTank(x, color) {
-    const groundY = getGroundHeightAt(x);
-
-    const cx = x;
-    const cy = groundY - tankHeight;
-
-    let img;
-    if (color === "blue") {
-        img = tankImg;
-    } else {
-        img = tankImg;
+function updateTankAngles() {
+    for (let key in players) {
+        const player = players[key];
+        player.angle = getGroundAngleAt(player.x);  
     }
-    context.drawImage(img, cx - tankWidth / 2, cy, tankWidth, tankHeight);
-
-    const gunLength = 18;
-    let gunAngle;
-    if (color === "blue") {
-        gunAngle = aimState.currentAngle;
-    } else {
-        const pl = (color === "red") ? players.computer : null;
-        gunAngle = (pl && pl.angle) ? pl.angle : Math.PI * 3 / 4;
-    }
-
-    context.beginPath();
-    context.moveTo(cx, cy + 12);
-    context.lineTo(
-        cx + Math.cos(gunAngle) * gunLength,
-        cy - Math.sin(gunAngle) * gunLength
-    );
-    context.lineWidth = 3;
-    context.strokeStyle = "yellow";
-    context.stroke();
 }
 
+function drawTank(player) {
+    const cx = player.x;
+    const cy = getGroundHeightAt(player.x) - tankHeight / 2;
+    const tankAngle = player.angle || 0;
+    context.save();
+    context.translate(cx, cy);
+    context.rotate(tankAngle);
+    context.drawImage(tankImg, -tankWidth / 2, -tankHeight / 2, tankWidth, tankHeight);
+    context.restore();
+    const gunX = 5; 
+    const gunY = -10; 
+    const gunLength = 25;
+    const gunThick = 4;
+    let gunAngle;
+    if (player.color === "blue") {
+        gunAngle = aimState.currentAngle; 
+    } else {
+        gunAngle = player.gunAngle || Math.PI * 3 / 4; 
+    }
+    const gunMainX = cx + gunX * Math.cos(tankAngle) - gunY * Math.sin(tankAngle);
+    const gunMainY = cy + gunX * Math.sin(tankAngle) + gunY * Math.cos(tankAngle);
+    const gunTipX = gunMainX + Math.cos(gunAngle) * gunLength;
+    const gunTipY = gunMainY - Math.sin(gunAngle) * gunLength;
+    context.beginPath();
+    context.moveTo(gunMainX, gunMainY);
+    context.lineTo(gunTipX, gunTipY);
+    context.lineWidth = gunThick;
+    context.strokeStyle = "#353535";
+    context.stroke();
+    if (player.color === "blue") {
+        aimState.shootCircle.x = gunMainX;
+        aimState.shootCircle.y = gunMainY;
+    }
+}
 
 // gravity 1000 isliya li hai kyunki frame rate (dt) jo ayega vo mostly three unit places tk ata hai
 const gravity = 1000;
@@ -216,30 +223,26 @@ class Projectile {
         // tank ke sath collision detection
         for (let key in players) {
             const player = players[key];
-           if (this.tankHit(this.x, this.y, player)) {
-    this.alive = false;
-    this.hitX = this.x;
-    this.hitY = this.y;
-    
-    this.crater(Math.floor(this.x), 18);
-    player.health = Math.max(0, player.health - damageAmount);
-    updateHud();
-    checkGameOver();
-    return;
-}
+            if (this.tankHit(this.x, this.y, player)) {
+                this.alive = false;
+                this.hitX = this.x;
+                this.hitY = this.y;
+                this.crater(Math.floor(this.x), 18);
+                player.health = Math.max(0, player.health - damageAmount);
+                updateHud();
+                checkGameOver();
+                return;
+            }
         }
-
         // Collision with terrain
-     if (this.y + this.r >= groundY) {
-    this.alive = false;
-    this.hitX = this.x;
-    this.hitY = groundY;
-    this.hit = true;
-
-    this.crater(Math.floor(this.x), 25); // terrain destruction
-    this.damageAt(this.x, this.y); // damage tanks in radius
-}
-
+        if (this.y + this.r >= groundY) {
+            this.alive = false;
+            this.hitX = this.x;
+            this.hitY = groundY;
+            this.hit = true;
+            this.crater(Math.floor(this.x), 25); 
+            this.damageAt(this.x, this.y);
+        }
         //Out of bounds mai projectile bekar ho jayega
         if (this.x < -50 || this.x > canvas.width + 50 || this.y > canvas.height + 50) {
             this.alive = false;
@@ -254,74 +257,74 @@ class Projectile {
         const tankBottom = tankTop + tankHeight;
         return projX >= tankLeft && projX <= tankRight && projY >= tankTop && projY <= tankBottom;
     }
-         handleTankCollision(player) {
-                this.alive = false;
-                this.hitX = this.x;
-                this.hitY = this.y;
-                this.hit = true;
-                this.explosionFrame = 0;
 
-                player.health = Math.max(0, player.health - damageAmount);
-                
-                const xi = Math.floor(this.x);
-                this.crater(xi, 20);
-                
-                updateHud();
-                checkGameOver();
-            }
-      handleTerrainCollision(xi, groundY) {
-                this.alive = false;
-                this.hitX = this.x;
-                this.hitY = groundY;
-                this.hit = true;
-                this.explosionFrame = 0;
-                
-                this.crater(Math.floor(this.x), 25);
-                this.damageAt(this.x, this.y);
-            }
-  damageAt(cx, cy) {
-                for (let key in players) {
-                    const p = players[key];
-                    const center = tankCentre(p);
-                    const d = Math.hypot(cx - center.x, cy - center.y);
-                    if (d <= damageRadius) {
-                        p.health = Math.max(0, p.health - damageAmount);
-                    }
-                }
-                updateHud();
-                checkGameOver();
-            }
-
-  crater(centerX, radius) {
-    for (let x = Math.max(0, centerX - radius); x <= Math.min(canvas.width - 1, centerX + radius); x++) {
-        const dx = x - centerX;
-        if (Math.abs(dx) > radius) continue;
-        const h = window.terrainHeight[x];
-        const dy = Math.sqrt(radius*radius - dx*dx);
-        window.terrainHeight[x] = Math.min(maxHeight, h + dy);
+    handleTankCollision(player) {
+        this.alive = false;
+        this.hitX = this.x;
+        this.hitY = this.y;
+        this.hit = true;
+        this.explosionFrame = 0;
+        player.health = Math.max(0, player.health - damageAmount);
+        const xi = Math.floor(this.x);
+        this.crater(xi, 20);
+        updateHud();
+        checkGameOver();
     }
-}
 
+    handleTerrainCollision(xi, groundY) {
+        this.alive = false;
+        this.hitX = this.x;
+        this.hitY = groundY;
+        this.hit = true;
+        this.explosionFrame = 0;
+        this.crater(Math.floor(this.x), 25);
+        this.damageAt(this.x, this.y);
+    }
 
-            smoothCrater(centerX, radius) {
-                const smoothRadius = radius + 10;
-                const start = Math.max(0, centerX - smoothRadius);
-                const end = Math.min(canvas.width - 1, centerX + smoothRadius);
-                
-                for (let x = start; x <= end; x++) {
-                    if (x > 1 && x < window.terrainHeight.length - 2) {
-                        // 5-point smoothing for better results
-                        const avg = (
-                            window.terrainHeight[x-2] + 
-                            window.terrainHeight[x-1] + 
-                            window.terrainHeight[x] + 
-                            window.terrainHeight[x+1] + 
-                            window.terrainHeight[x+2]
-                        ) / 5;
-                        window.terrainHeight[x] = avg;
-                    }
-                }
+    damageAt(cx, cy) {
+        for (let key in players) {
+            const p = players[key];
+            const center = tankCentre(p);
+            const d = Math.hypot(cx - center.x, cy - center.y);
+            if (d <= damageRadius) {
+                p.health = Math.max(0, p.health - damageAmount);
             }
+        }
+        updateHud();
+        checkGameOver();
+    }
+
+    crater(centerX, radius) {
+        for (let x = Math.max(0, centerX - radius); x <= Math.min(canvas.width - 1, centerX + radius); x++) {
+            const dx = x - centerX;
+            if (Math.abs(dx) > radius) {
+                continue;
+            }
+            const h = window.terrainHeight[x];
+            const dy = Math.sqrt(radius*radius - dx*dx);
+            window.terrainHeight[x] = Math.min(maxHeight, h + dy);
+        }
+    }
+
+    smoothCrater(centerX, radius) {
+        const smoothRadius = radius + 10;
+        const start = Math.max(0, centerX - smoothRadius);
+        const end = Math.min(canvas.width - 1, centerX + smoothRadius);
+        
+        for (let x = start; x <= end; x++) {
+            if (x > 1 && x < window.terrainHeight.length - 2) {
+                // 5-point smoothing for better results
+                const avg = (
+                    window.terrainHeight[x-2] + 
+                    window.terrainHeight[x-1] + 
+                    window.terrainHeight[x] + 
+                    window.terrainHeight[x+1] + 
+                    window.terrainHeight[x+2]
+                ) / 5;
+                window.terrainHeight[x] = avg;
+            }
+        }
+    }
 
     // Draws the projectile as a circle aur jb hit hoga to circle formation hoga show krne ko
     draw(ctx) {
@@ -340,32 +343,32 @@ class Projectile {
             this.hit = false;
         }
     }
-          drawExplosion(ctx) {
-    if (!this.hit && this.explosionFrame === 0) return;
+    drawExplosion(ctx) {
+        if (!this.hit && this.explosionFrame === 0) {
+            return;
+        }
 
-    const frames = 15;
-    const progress = this.explosionFrame / frames;
-    const alpha = Math.max(0, 1 - progress);
-    const radius = 15 + this.explosionFrame * 3;
+        const frames = 15;
+        const progress = this.explosionFrame / frames;
+        const alpha = Math.max(0, 1 - progress);
+        const radius = 15 + this.explosionFrame * 3;
 
-    ctx.beginPath();
-    ctx.arc(this.hitX, this.hitY, radius, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(255, 165, 0, ${alpha})`;
-    ctx.fill();
+        ctx.beginPath();
+        ctx.arc(this.hitX, this.hitY, radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 165, 0, ${alpha})`;
+        ctx.fill();
 
-    ctx.beginPath();
-    ctx.arc(this.hitX, this.hitY, radius * 0.7, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(255, 255, 0, ${alpha * 0.8})`;
-    ctx.fill();
+        ctx.beginPath();
+        ctx.arc(this.hitX, this.hitY, radius * 0.7, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 0, ${alpha * 0.8})`;
+        ctx.fill();
 
-    this.explosionFrame++;
-    if (this.explosionFrame > frames) {
-        this.hit = false;
-        this.explosionFrame = 0;
-    }
-}
-
-        
+        this.explosionFrame++;
+        if (this.explosionFrame > frames) {
+            this.hit = false;
+            this.explosionFrame = 0;
+        }
+    }      
 }
 
 function fireProjectile(startX, startY, angleRad, power, shooter) {
@@ -436,8 +439,9 @@ fireButton.addEventListener("click", () => {
         return;
     }
     updateAimCircle();
-    const startX = leftTankX + Math.cos(aimState.currentAngle) * (tankWidth / 2);
-    const startY = getGroundHeightAt(leftTankX) - tankHeight - Math.sin(aimState.currentAngle) * (tankWidth / 2);
+    const player = players.player1;
+    const startX = player.x + Math.cos(aimState.currentAngle) * (tankWidth / 2);
+    const startY = getGroundHeightAt(player.x) - tankHeight - Math.sin(aimState.currentAngle) * (tankWidth / 2);
     fireProjectile(startX, startY, aimState.currentAngle, aimState.currentPower, "player1");
     aimState.controlAiming = false;
     aimState.mousePos = null;
@@ -513,9 +517,10 @@ document.addEventListener("keydown",(e)=>{
 
 // tank position ko follow krta hai jb bhi terrain change hoti hai
 function updateAimCircle() {
-    const groundY = getGroundHeightAt(leftTankX);
+    const player = players.player1; 
+    const groundY = getGroundHeightAt(player.x);
     aimState.shootCircle.y = groundY - tankHeight;
-    aimState.shootCircle.x = leftTankX;
+    aimState.shootCircle.x = player.x;
 }
 
 function getMousePos(evt) {
@@ -633,52 +638,84 @@ function computerTurn() {
             }
         }
     }
-    players.computer.angle = bestAngle;
+    players.computer.gunAngle = bestAngle;
     const startX = computer.x + Math.cos(bestAngle) * (tankWidth / 2);
     const startY = getGroundHeightAt(computer.x) - tankHeight - Math.sin(bestAngle) * (tankWidth / 2);
     fireProjectile(startX, startY, bestAngle, bestPower, "computer");
     currentPlayer = "player1";
 }
 
-
+function playerMove(dt) {
+    let dir = 0;
+    if (moveLeft) {
+        dir = -1; 
+    }
+    if (moveRight) {
+        dir = 1; 
+    }
+    const delta = dir * moveSpeed * dt;
+    const newX = players.player1.x + delta;
+    players.player1.x = limit(newX, 0, canvas.width - 1);
+    playerMoved(); 
+}
 
 function update(dt) {
-    updateAimCircle();
-
+    playerMove(dt);
+    updateTankAngles();
     for (let i = projectiles.length - 1; i >= 0; i--) {
-        projectiles[i].update(dt); // ye main line hai jo move krva rhi hai
+        projectiles[i].update(dt);
         if (!projectiles[i].alive && !projectiles[i].hit) {
             projectiles.splice(i, 1);
         }
     }
-    if (projectiles.length == 0) {
-        if (currentPlayer == "computer") {
-            computerTurn();
-        }
+    if (projectiles.length == 0 && currentPlayer == "computer") {
+        computerTurn();
     }
 }
 
 function render() {
     context.clearRect(0, 0, canvas.width, canvas.height);
     mountainGenerate(window.terrainHeight, "#0a2a6c", "#1e3c96");
-    drawTank(players.player1.x, players.player1.color);
-    drawTank(players.computer.x, players.computer.color);
-    if (aimState.isAiming || mouseDown) {// aim assist line draw krne ke liya
+    drawTank(players.player1);
+    drawTank(players.computer);
+    if (aimState.isAiming || mouseDown || aimState.controlAiming) {
+        const player = players.player1;
+        const cx = player.x;
+        const cy = getGroundHeightAt(player.x) - tankHeight / 2;
+        const tankAngle = player.angle;
+
+        const gunX = 5;
+        const gunY = -10;
+        const gunLength = 25;
+
+        const gunMainX = cx + gunX * Math.cos(tankAngle) - gunY * Math.sin(tankAngle);
+        const gunMainY = cy + gunX * Math.sin(tankAngle) + gunY * Math.cos(tankAngle);
+
+        const gunTipX = gunMainX + Math.cos(aimState.currentAngle) * gunLength;
+        const gunTipY = gunMainY - Math.sin(aimState.currentAngle) * gunLength;
+
+        let endX, endY;
         if (aimState.mousePos) {
-            const c = aimState.shootCircle;
-            const dx = aimState.mousePos.x - c.x;
-            const dy = aimState.mousePos.y - c.y;
+            const dx = aimState.mousePos.x - gunMainX;
+            const dy = aimState.mousePos.y - gunMainY;
             const distMouse = Math.hypot(dx, dy);
             const maxDist = Math.min(distMouse, aimState.shootCircle.r);
-            const endX = c.x + (dx / distMouse) * maxDist;
-            const endY = c.y + (dy / distMouse) * maxDist;
-            context.beginPath();
-            context.moveTo(c.x, c.y);
-            context.lineTo(endX, endY);
-            context.lineWidth = 2;
-            context.strokeStyle = "rgba(60, 147, 36, 0.8)";
-            context.stroke();
+            endX = gunMainX + (dx / distMouse) * maxDist;
+            endY = gunMainY + (dy / distMouse) * maxDist;
+        } else {
+            endX = gunTipX;
+            endY = gunTipY;
         }
+
+        context.beginPath();
+        context.moveTo(gunTipX, gunTipY);
+        context.lineTo(endX, endY);
+        context.lineWidth = 2;
+        context.strokeStyle = "rgba(60, 147, 36, 0.8)";
+        context.stroke();
+
+        aimState.shootCircle.x = gunMainX;
+        aimState.shootCircle.y = gunMainY;
     }
     for (let p of projectiles) {
         p.draw(context);
@@ -716,8 +753,8 @@ function checkGameOver() {
     let results;
     if (players.player1.health <= 0) {
         gameOver = true;
-         results = "Computer Wins!"
-            document.getElementById("gameOverText").innerText = results;
+        results = "Computer Wins!"
+        document.getElementById("gameOverText").innerText = results;
         document.getElementById("gameOverPopup").classList.remove("hidden");
 
         document.getElementById("restartBtn").onclick = () => {
@@ -744,6 +781,32 @@ function checkGameOver() {
         };
         return true;
     }
-  
     return false;
+}
+
+let moveLeft = false;
+let moveRight = false;
+const moveSpeed = 25;
+
+document.addEventListener("keydown", (e) => {
+    if (e.key === "a" || e.key === "A") {
+        moveLeft = true;
+        e.preventDefault();
+    } else if (e.key === "d" || e.key === "D") {
+        moveRight = true;
+        e.preventDefault();
+    }
+});
+
+document.addEventListener("keyup", (e) => {
+    if (e.key === "a" || e.key === "A") {
+        moveLeft = false;
+    } else if (e.key === "d" || e.key === "D") {
+        moveRight = false;
+    }
+});
+
+function playerMoved() {
+    updateAimCircle(); 
+    updateHud();
 }
