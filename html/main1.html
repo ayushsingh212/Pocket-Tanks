@@ -30,6 +30,18 @@
         <div id="left-control" class="control">
             <label for="angleRange">Angle: <span id="angleValue">45</span></label>
             <input id="angleRange" type="range" min="0" max="180" step="1" />
+<div id="move-control" class="control move-control">
+  <div class="move-row">
+    <button id="move-left-btn" class="move-btn" title="Move Left">«</button>
+
+    <div class="move-center" aria-live="polite">
+      <div class="move-label">MOVE</div>
+      <div id="move-count" class="move-count">5</div>
+    </div>
+
+    <button id="move-right-btn" class="move-btn" title="Move Right">»</button>
+  </div>
+</div>
         </div>
 
         <div id="center-control" class="control center">

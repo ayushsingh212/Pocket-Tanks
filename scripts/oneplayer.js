@@ -99,7 +99,9 @@ const players = {
         x: leftTankX,
         color: "blue",
         health: maxHealth,
-        angle: 0 
+        angle: 0,
+        isMoving: false,
+        targetX: leftTankX 
     },
     computer: {
         x: canvas.width - rightTankXPadding,
@@ -585,7 +587,6 @@ canvas.addEventListener("mouseup", (e) => {
     aimState.isAiming = false;
     mouseDown = false;
 });
-
 function regenerateTerrain() {
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
@@ -606,6 +607,7 @@ window.addEventListener("resize", () => {
 regenerateTerrain();
 
 let lastTime = 0;
+let previousPlayer = null;
 
 // computer iski vajah se shoot karega
 function computerTurn() {
@@ -642,7 +644,6 @@ function computerTurn() {
     const startX = computer.x + Math.cos(bestAngle) * (tankWidth / 2);
     const startY = getGroundHeightAt(computer.x) - tankHeight - Math.sin(bestAngle) * (tankWidth / 2);
     fireProjectile(startX, startY, bestAngle, bestPower, "computer");
-    currentPlayer = "player1";
 }
 
 function playerMove(dt) {
@@ -660,16 +661,28 @@ function playerMove(dt) {
 }
 
 function update(dt) {
-    playerMove(dt);
+    // 1. Handle tank movement animation
+    tankAnim(dt);
+    
+    // 2. Update tank angles to match terrain
     updateTankAngles();
+
+    // 3. Update all active projectiles
     for (let i = projectiles.length - 1; i >= 0; i--) {
         projectiles[i].update(dt);
         if (!projectiles[i].alive && !projectiles[i].hit) {
             projectiles.splice(i, 1);
         }
     }
-    if (projectiles.length == 0 && currentPlayer == "computer") {
-        computerTurn();
+
+    // 4. Handle turn logic only when the game is idle (no projectiles flying)
+    if (projectiles.length === 0) {
+        if (currentPlayer === 'computer') {
+            computerTurn();
+            currentPlayer = 'player1';
+            // Don't reset moveUsesLeft — it's a per-game budget now.
+            updatePlayerControls();
+        }
     }
 }
 
@@ -788,25 +801,62 @@ let moveLeft = false;
 let moveRight = false;
 const moveSpeed = 25;
 
-document.addEventListener("keydown", (e) => {
-    if (e.key === "a" || e.key === "A") {
-        moveLeft = true;
-        e.preventDefault();
-    } else if (e.key === "d" || e.key === "D") {
-        moveRight = true;
-        e.preventDefault();
-    }
-});
-
-document.addEventListener("keyup", (e) => {
-    if (e.key === "a" || e.key === "A") {
-        moveLeft = false;
-    } else if (e.key === "d" || e.key === "D") {
-        moveRight = false;
-    }
-});
-
 function playerMoved() {
     updateAimCircle(); 
     updateHud();
+}
+
+let moveUsesLeft = 5;
+const maxMove = 5;
+const moveStep = 40;
+
+const leftMoveBtn = document.getElementById('move-left-btn');
+const rightMoveBtn = document.getElementById('move-right-btn');
+const moveCount = document.getElementById('move-count');
+
+function updatePlayerControls() {
+    moveCount.innerText = moveUsesLeft;
+    const canMove = currentPlayer === "player1" && moveUsesLeft > 0 && !players.player1.isMoving;
+    const canFire = currentPlayer === "player1" && !players.player1.isMoving;
+    leftMoveBtn.disabled = !canMove;
+    rightMoveBtn.disabled = !canMove;
+    fireButton.disabled = !canFire;
+    angleRange.disabled = !canFire;
+    powerRange.disabled = !canFire;
+}
+
+function movePossible(dx) {
+    if (currentPlayer !== "player1" || moveUsesLeft <= 0 || players.player1.isMoving) {
+        return;
+    }
+    const player = players.player1;
+    player.targetX = limit(player.x + dx, 0, canvas.width - 1);
+    player.isMoving = true;
+    moveUsesLeft--; 
+    updatePlayerControls(); 
+}
+
+leftMoveBtn.addEventListener('click', () => movePossible(-moveStep));
+rightMoveBtn.addEventListener('click', () => movePossible(moveStep));
+
+function checkTurnReset() {
+    updatePlayerControls();
+}
+const moveAnimationSpeed = 150;
+ 
+function tankAnim(dt) {
+    const player = players.player1;
+    if (!player.isMoving) {
+        return;
+    }
+    const currentX = player.x;
+    const targetX = player.targetX;
+    const direction = Math.sign(targetX - currentX);
+    const moveDistance = moveAnimationSpeed * dt;
+    player.x += direction * moveDistance;
+    if ((direction > 0 && player.x >= targetX) || (direction < 0 && player.x <= targetX)) {
+        player.x = targetX; 
+        player.isMoving = false;
+        updatePlayerControls(); 
+    }
 }
