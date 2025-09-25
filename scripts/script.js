@@ -231,7 +231,7 @@ function fireTank(tank, angleDeg, power, shooter, onComplete) {
         const xi = Math.floor(pos.x);
         if (xi < 0 || xi >= canvas.width || pos.y >= (window.terrainHeight[xi] || maxHeight)) {
             clearInterval(handle);
-            explode(pos.x, pos.y, 30, shooter);
+            explode(pos.x, pos.y, 15, shooter);
             if (typeof onComplete === "function") onComplete();
         }
     }, 16);

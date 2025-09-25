@@ -7,6 +7,29 @@ let mountHeight = 0;
 const tankImg = new Image();
 tankImg.src = "../styles/tank1.png";
 
+
+let nameV = document.querySelector(".name");
+let playerHp = document.querySelector("#player1-hp");
+let computerHp = document.querySelector("#computer-hp");
+
+
+
+const playersInfo  = JSON.parse(localStorage.getItem("players")) || [];
+
+
+let length = playersInfo.length-1;
+   
+const currentUser  =  playersInfo[length];
+nameV.innerText = `${currentUser["name"]}`
+playerHp.innerText =`${currentUser["health"]}`
+computerHp.innerText = `${currentUser["health"]}`
+
+
+
+
+
+
+
 // Returns a random number between a and b.
 function randRange(a, b) {
     return a + Math.random() * (b - a);
@@ -70,7 +93,7 @@ const leftTankX = 300;
 const rightTankXPadding = 300;
 const damageRadius = 30;
 const damageAmount = 5;
-const maxHealth = 10;
+const maxHealth = currentUser["health"];
 
 const players = {
     player1: {
@@ -486,6 +509,9 @@ canvas.addEventListener("mousedown", (e) => {
 
 canvas.addEventListener("mouseup", (e) => {
     if (aimState.isAiming) {
+        
+        console.log("I am working")
+
         const aim = aimState.shootCircle;
         const dx = aimState.mousePos.x - aim.x;
         const dy = aimState.mousePos.y - aim.y;
