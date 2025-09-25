@@ -208,26 +208,20 @@ class Projectile {
             return false;
         };
 
-        // Collision detection with tanks
+        // tank ke sath collision detection
         for (let key in players) {
             const player = players[key];
-            if (this.tankHit(this.x, this.y, player)) {
-                const willCrater = craterForm();
-                this.alive = false;
-                this.hitX = this.x;
-                this.hitY = this.y;
-
-                if (willCrater) {
-                    this.hit = true;
-                    this.crater(xi, 18);
-                    player.health = Math.max(0, player.health - damageAmount);
-                    updateHud();
-                    checkGameOver();
-                } else {
-                    this.hit = false;
-                }
-                return;
-            }
+           if (this.tankHit(this.x, this.y, player)) {
+    this.alive = false;
+    this.hitX = this.x;
+    this.hitY = this.y;
+    
+    this.crater(Math.floor(this.x), 18);
+    player.health = Math.max(0, player.health - damageAmount);
+    updateHud();
+    checkGameOver();
+    return;
+}
         }
 
         // Collision with terrain
@@ -240,7 +234,7 @@ class Projectile {
             if (willCrater) {
                 this.hit = true;
                 this.crater(xi, 18); // make a crater
-                this.damageAt(this.x, this.y, this.firedBy); // reduce tank health
+                this.damageAt(this.x, this.y); // reduce tank health
             } else {
                 this.hit = false;
             }
@@ -261,21 +255,18 @@ class Projectile {
         return projX >= tankLeft && projX <= tankRight && projY >= tankTop && projY <= tankBottom;
     }
 
-    damageAt(cx, cy, firedBy) {
-        let targetKey;
-        if (firedBy == "player1") {
-            targetKey = "computer";
-        } else {
-            targetKey = "player1";
-        }
-        const p = players[targetKey];
-        const center = tankCentre(p);
-        if (Math.hypot(cx - center.x, cy - center.y) <= damageRadius) {
-            p.health = Math.max(0, p.health - damageAmount);
-            updateHud();
-            checkGameOver();
-        }
-    }
+  damageAt(cx, cy) {
+                for (let key in players) {
+                    const p = players[key];
+                    const center = tankCentre(p);
+                    const d = Math.hypot(cx - center.x, cy - center.y);
+                    if (d <= damageRadius) {
+                        p.health = Math.max(0, p.health - damageAmount);
+                    }
+                }
+                updateHud();
+                checkGameOver();
+            }
 
     // Explosion logic (uses smoothstep function)
     crater(centerX, radius) {
