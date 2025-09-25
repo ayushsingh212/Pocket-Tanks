@@ -4,6 +4,8 @@ let maxHeight = 0;
 const peakPosMin = 0.25;
 const peakPosMax = 0.75;
 let mountHeight = 0;
+const tankImg = new Image();
+tankImg.src = "../styles/tank1.png";
 
 // Returns a random number between a and b.
 function randRange(a, b) {
@@ -62,13 +64,13 @@ window.getGroundHeightAt = function (x) {
     return (window.terrainHeight && window.terrainHeight[x]) || maxHeight;
 };
 
-const tankWidth = 30;
-const tankHeight = 15;
+const tankWidth = 80;
+const tankHeight = 50;
 const leftTankX = 300;
 const rightTankXPadding = 300;
 const damageRadius = 30;
 const damageAmount = 5;
-const maxHealth = 15;
+const maxHealth = 10;
 
 const players = {
     player1: {
@@ -91,30 +93,47 @@ function rightTankX() {
 function tankCentre(player) {
     const cx = player.x;
     const cy = getGroundHeightAt(player.x) - tankHeight / 2;
-    return {
-        x: cx,
-        y: cy
+    const groundY = getGroundHeightAt(player.x);
+    const corrcy = groundY - tankHeight / 2;
+    return { 
+        x: cx, 
+        y: corrcy 
     };
 }
 
+
 function drawTank(x, color) {
+    console.log('drawTank', color, x);
     const groundY = getGroundHeightAt(x);
-    context.fillStyle = color;
-    context.fillRect(x - tankWidth / 2, groundY - tankHeight, tankWidth, tankHeight);
+
+    const cx = x;
+    const cy = groundY - tankHeight;
+
+    let img;
+    if (color === "blue") {
+        img = tankImg;
+    } else {
+        img = tankImg;
+    }
+    context.drawImage(img, cx - tankWidth / 2, cy, tankWidth, tankHeight          );
+
     const gunLength = 18;
     let gunAngle = Math.PI * 3 / 4;
     if (color == "blue") {
         gunAngle = aimState.currentAngle;
     }
-    const cx = x;
-    const cy = groundY - tankHeight;
+
     context.beginPath();
-    context.moveTo(cx, cy);
-    context.lineTo(cx + Math.cos(gunAngle) * gunLength, cy - Math.sin(gunAngle) * gunLength);
+    context.moveTo(cx, cy + 12);
+    context.lineTo(
+        cx + Math.cos(gunAngle) * gunLength,
+        cy - Math.sin(gunAngle) * gunLength
+    );
     context.lineWidth = 3;
     context.strokeStyle = "yellow";
     context.stroke();
 }
+
 
 // gravity 1000 isliya li hai kyunki frame rate (dt) jo ayega vo mostly three unit places tk ata hai
 const gravity = 1000;
@@ -178,7 +197,9 @@ class Projectile {
                 if (willCrater) {
                     this.hit = true;
                     this.crater(xi, 18);
-                    this.damageAt(this.x, this.y);
+                    player.health = Math.max(0, player.health - damageAmount);
+                    updateHud();
+                    checkGameOver();
                 } else {
                     this.hit = false;
                 }
@@ -196,7 +217,7 @@ class Projectile {
             if (willCrater) {
                 this.hit = true;
                 this.crater(xi, 18); // make a crater
-                this.damageAt(this.x, groundY); // reduce tank health
+                this.damageAt(this.x, this.y, this.firedBy); // reduce tank health
             } else {
                 this.hit = false;
             }
@@ -217,16 +238,20 @@ class Projectile {
         return projX >= tankLeft && projX <= tankRight && projY >= tankTop && projY <= tankBottom;
     }
 
-    damageAt(cx, cy) {
-        for (let key in players) {
-            const p = players[key];
-            const center = tankCentre(p);
-            if (Math.hypot(cx - center.x, cy - center.y) <= damageRadius) {
-                p.health = Math.max(0, p.health - damageAmount);
-            }
+    damageAt(cx, cy, firedBy) {
+        let targetKey;
+        if (firedBy == "player1") {
+            targetKey = "computer";
+        } else {
+            targetKey = "player1";
         }
-        updateHud(); // update health counter
-        checkGameOver();
+        const p = players[targetKey];
+        const center = tankCentre(p);
+        if (Math.hypot(cx - center.x, cy - center.y) <= damageRadius) {
+            p.health = Math.max(0, p.health - damageAmount);
+            updateHud();
+            checkGameOver();
+        }
     }
 
     // Explosion logic (uses smoothstep function)
@@ -263,6 +288,7 @@ class Projectile {
 }
 
 function fireProjectile(startX, startY, angleRad, power, shooter) {
+    console.log('firing by', shooter);
     const speed = power * 70;
     const vx = Math.cos(angleRad) * speed;
     const vy = -Math.sin(angleRad) * speed;
@@ -317,13 +343,7 @@ angleRange.addEventListener("input", (e) => {
     updateAimAssistFromAngle();
 });
 
-// document.addEventListener("keydown")
-
-
-
-
-
-  let p = 5;
+let p = 5;
 powerRange.addEventListener("input", (e) => {
      p = Number(e.target.value);
     powerValue.innerText = Math.round(p * 10) / 10;
@@ -344,95 +364,75 @@ fireButton.addEventListener("click", () => {
     currentPlayer = "computer";
 });
 
-
-
 // space button se bhi fire hoga ab for butter user experience
 document.addEventListener("keydown",(e)=>{
-
-if(e.key === " ")
-{
-  if (currentPlayer !== "player1") {
-        return;
-    }
-    updateAimCircle();
-    const startX = leftTankX + Math.cos(aimState.currentAngle) * (tankWidth / 2);
-    const startY = getGroundHeightAt(leftTankX) - tankHeight - Math.sin(aimState.currentAngle) * (tankWidth / 2);
-    fireProjectile(startX, startY, aimState.currentAngle, aimState.currentPower, "player1");
-    aimState.controlAiming = false;
-    aimState.mousePos = null;
-    currentPlayer = "computer";
-
-
-
-}
- if (e.key==="ArrowLeft")
-{   
-
-    if(deg === 0)
+    if(e.key === " ")
     {
-        return;
+        if (currentPlayer !== "player1") {
+            return;
+        }
+        updateAimCircle();
+        const startX = leftTankX + Math.cos(aimState.currentAngle) * (tankWidth / 2);
+        const startY = getGroundHeightAt(leftTankX) - tankHeight - Math.sin(aimState.currentAngle) * (tankWidth / 2);
+        fireProjectile(startX, startY, aimState.currentAngle, aimState.currentPower, "player1");
+        aimState.controlAiming = false;
+        aimState.mousePos = null;
+        currentPlayer = "computer";
     }
-   console.log("I am the value of the degree",deg)
-    deg = parseInt(deg)
-    deg -=   1;
-      angleRange.value = deg;
-     angleValue.innerText = parseInt(deg);
-    aimState.currentAngle = deg * Math.PI / 180;
-    updateAimAssistFromAngle();
-
-}
-if(e.key==="ArrowRight")
-{
- if(deg === 180)
+    if (e.key==="ArrowLeft")
+    {   
+        if(deg === 0)
+        {
+            return;
+        }
+        console.log("I am the value of the degree",deg)
+        deg = parseInt(deg)
+        deg -= 1;
+        angleRange.value = deg;
+        angleValue.innerText = parseInt(deg);
+        aimState.currentAngle = deg * Math.PI / 180;
+        updateAimAssistFromAngle();
+    }
+    if(e.key==="ArrowRight")
     {
-        return;
+        if(deg === 180)
+        {
+            return;
+        }
+        console.log("I am the value of the degree",deg)
+        deg = parseInt(deg)
+        deg +=   1;
+            angleRange.value = deg;
+
+        angleValue.innerText = parseInt(deg);
+        aimState.currentAngle = deg * Math.PI / 180;
+        updateAimAssistFromAngle();
     }
-   console.log("I am the value of the degree",deg)
-    deg = parseInt(deg)
-    deg +=   1;
-          angleRange.value = deg;
-
-     angleValue.innerText = parseInt(deg);
-    aimState.currentAngle = deg * Math.PI / 180;
-    updateAimAssistFromAngle();
-
-}
-if(e.key ==="ArrowUp")
-{
-   
-    if(p === 20)
+    if(e.key ==="ArrowUp")
     {
-        return;
+        if(p === 20)
+        {
+            return;
+        }
+        p += 0.25;
+        powerRange.value = parseInt(p);
+        powerValue.innerText = Math.round(p * 10) / 10;
+        aimState.currentPower = p;
+        updateAimAssistFromAngle();
     }
-
-  p += 0.25;
-  powerRange.value = parseInt(p);
-    powerValue.innerText = Math.round(p * 10) / 10;
-    aimState.currentPower = p;
-    updateAimAssistFromAngle();
-
-}
-if(e.key ==="ArrowDown")
-{
-  if(p ===0)
+    if(e.key ==="ArrowDown")
     {
-        return;
+        if(p ===0)
+        {
+            return;
+        }
+        p -= 0.25;
+        powerRange.value = parseInt(p);
+        powerValue.innerText = Math.round(p * 10) / 10;
+        aimState.currentPower = p;
+        updateAimAssistFromAngle();
     }
-
-  p -= 0.25;
-  powerRange.value = parseInt(p);
-    powerValue.innerText = Math.round(p * 10) / 10;
-    aimState.currentPower = p;
-    updateAimAssistFromAngle();
-
-
-
-}
-
 })   // sabhi event listener add hogye yha pe
-
-
-
 
 // tank position ko follow krta hai jb bhi terrain change hoti hai
 function updateAimCircle() {
