@@ -3,7 +3,7 @@ const playerHealthInput = document.getElementById("playerHealthValue");
 const healthDisplay = document.querySelector("#healthV");
 const saveButton = document.getElementById("saveData");
 
-playerHealthInput.addEventListener("change", () => {
+playerHealthInput.addEventListener("input", () => {
    
   healthDisplay.innerText = ` ${playerHealthInput.value}`;
 });
