@@ -713,17 +713,37 @@ function checkGameOver() {
     if (gameOver) {
         return false; 
     }
+    let results;
     if (players.player1.health <= 0) {
         gameOver = true;
-        alert("Computer Wins!");
-        location.reload(); 
+         results = "Computer Wins!"
+            document.getElementById("gameOverText").innerText = results;
+        document.getElementById("gameOverPopup").classList.remove("hidden");
+
+        document.getElementById("restartBtn").onclick = () => {
+            window.location.reload();
+        };
+
+        document.getElementById("exitBtn").onclick = () => {
+            window.location.href = "../html/gameover.html";
+        };
         return true;
     }
     if (players.computer.health <= 0) {
         gameOver = true;
-        alert("Player 1 Wins!");
-        location.reload();
+         results = "Player 1 Wins!"
+            document.getElementById("gameOverText").innerText = results;
+        document.getElementById("gameOverPopup").classList.remove("hidden");
+
+        document.getElementById("restartBtn").onclick = () => {
+            window.location.reload();
+        };
+
+        document.getElementById("exitBtn").onclick = () => {
+            window.location.href = "../html/gameover.html";
+        };
         return true;
     }
+  
     return false;
 }
