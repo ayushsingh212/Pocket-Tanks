@@ -104,7 +104,8 @@ const players = {
     computer: {
         x: canvas.width - rightTankXPadding,
         color: "red",
-        health: maxHealth
+        health: maxHealth,
+        angle: Math.PI * 3 / 4
     }
 };
 
@@ -126,7 +127,6 @@ function tankCentre(player) {
 
 
 function drawTank(x, color) {
-    console.log('drawTank', color, x);
     const groundY = getGroundHeightAt(x);
 
     const cx = x;
@@ -138,12 +138,15 @@ function drawTank(x, color) {
     } else {
         img = tankImg;
     }
-    context.drawImage(img, cx - tankWidth / 2, cy, tankWidth, tankHeight          );
+    context.drawImage(img, cx - tankWidth / 2, cy, tankWidth, tankHeight);
 
     const gunLength = 18;
-    let gunAngle = Math.PI * 3 / 4;
-    if (color == "blue") {
+    let gunAngle;
+    if (color === "blue") {
         gunAngle = aimState.currentAngle;
+    } else {
+        const pl = (color === "red") ? players.computer : null;
+        gunAngle = (pl && pl.angle) ? pl.angle : Math.PI * 3 / 4;
     }
 
     context.beginPath();
@@ -366,7 +369,6 @@ class Projectile {
 }
 
 function fireProjectile(startX, startY, angleRad, power, shooter) {
-    console.log('firing by', shooter);
     const speed = power * 70;
     const vx = Math.cos(angleRad) * speed;
     const vy = -Math.sin(angleRad) * speed;
@@ -415,7 +417,7 @@ function updateAimAssistFromAngle() {
   
 let deg =45;
 angleRange.addEventListener("input", (e) => {
-     deg = Number(e.target.value);
+    deg = Number(e.target.value);
     angleValue.innerText = deg;
     aimState.currentAngle = deg * Math.PI / 180;
     updateAimAssistFromAngle();
@@ -423,7 +425,7 @@ angleRange.addEventListener("input", (e) => {
 
 let p = 5;
 powerRange.addEventListener("input", (e) => {
-     p = Number(e.target.value);
+    p = Number(e.target.value);
     powerValue.innerText = Math.round(p * 10) / 10;
     aimState.currentPower = p;
     updateAimAssistFromAngle();
@@ -463,7 +465,6 @@ document.addEventListener("keydown",(e)=>{
         {
             return;
         }
-        console.log("I am the value of the degree",deg)
         deg = parseInt(deg)
         deg -= 1;
         angleRange.value = deg;
@@ -477,11 +478,9 @@ document.addEventListener("keydown",(e)=>{
         {
             return;
         }
-        console.log("I am the value of the degree",deg)
         deg = parseInt(deg)
-        deg +=   1;
-            angleRange.value = deg;
-
+        deg += 1;
+        angleRange.value = deg;
         angleValue.innerText = parseInt(deg);
         aimState.currentAngle = deg * Math.PI / 180;
         updateAimAssistFromAngle();
@@ -607,36 +606,40 @@ let lastTime = 0;
 function computerTurn() {
     const computer = players.computer;
     const player = players.player1;
-    const targetOffset = randRange(-10, 10);
+    const targetOffset = randRange(-20, 20);
     const targetX = player.x + targetOffset;
     const targetY = getGroundHeightAt(player.x);
-    const dx = targetX - computer.x;
-    const angleRad = Math.PI * 3 / 4;
+    let bestAngle = 0;
     let bestPower = 0;
     let minError = Infinity;
-    for (let power = 5; power <= 20; power += 0.5) {
-        const speed = power * 70;
-        const vx = Math.cos(angleRad) * speed;
-        const vy = -Math.sin(angleRad) * speed;
-        let t;
-        if (vx == 0) { 
-            t = 0;
-        }
-        else {
-            t = dx / vx;
-        }
-        const yest = getGroundHeightAt(computer.x) - tankHeight - Math.sin(angleRad) * (tankWidth / 2) + vy * t + 0.5 * gravity * t * t;
-        const error = Math.abs(yest - targetY);
-        if (error < minError) {
-            minError = error;
-            bestPower = power;
+    for (let angleRad = Math.PI / 6; angleRad <= Math.PI * 5 / 6; angleRad += Math.PI / 36) {
+        for (let power = 5; power <= 25; power += 0.5) {
+            const speed = power * 70;
+            const vx = Math.cos(angleRad) * speed;
+            const vy = -Math.sin(angleRad) * speed;
+            let t;
+            if (vx === 0) {
+                t = 0;
+            }
+            else {
+                t = (targetX - computer.x) / vx;
+            }
+            const yEst = getGroundHeightAt(computer.x) - tankHeight - Math.sin(angleRad) * (tankWidth / 2) + vy * t + 0.5 * gravity * t * t;
+            const error = Math.abs(yEst - targetY);
+            if (error < minError) {
+                minError = error;
+                bestAngle = angleRad;
+                bestPower = power;
+            }
         }
     }
-    const startX = computer.x - Math.cos(angleRad) * (tankWidth / 2);
-    const startY = getGroundHeightAt(computer.x) - tankHeight - Math.sin(angleRad) * (tankWidth / 2);
-    fireProjectile(startX, startY, angleRad, bestPower, "computer");
+    players.computer.angle = bestAngle;
+    const startX = computer.x + Math.cos(bestAngle) * (tankWidth / 2);
+    const startY = getGroundHeightAt(computer.x) - tankHeight - Math.sin(bestAngle) * (tankWidth / 2);
+    fireProjectile(startX, startY, bestAngle, bestPower, "computer");
     currentPlayer = "player1";
 }
+
 
 
 function update(dt) {
