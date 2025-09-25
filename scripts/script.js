@@ -17,6 +17,14 @@ let gameOver = false;
 
 
 
+const tankImage = new Image();
+tankImage.src = "../resources/Spritesheet/tanks_spritesheetRetina.png";
+
+tankImage.onload = () => {
+  console.log("Tank image loaded!");
+  setupAndDraw();  
+};
+
 
 
 
@@ -27,8 +35,9 @@ const peakPosMin = 0.45;
 const peakPosMax = 0.75;
 
 window.terrainHeight = [];
-let tank1 = { x: 0, y: 0, color: "blue" };
-let tank2 = { x: 0, y: 0, color: "red" };
+let tank1 = { x: 0, y: 0, color: "blue", flip: false };
+let tank2 = { x: 0, y: 0, color: "red", flip: true }; 
+
 
 function generateMountain(width, mountHeight) {
     const height = new Array(width);
@@ -82,11 +91,24 @@ function drawTerrain(heightArr) {
 }
 
 function drawTank(tank) {
-    context.fillStyle = tank.color;
-    context.fillRect(Math.round(tank.x - tankWidth / 2), Math.round(tank.y), tankWidth, tankHeight);  // I drawn tank
+    context.save();
 
-    context.fillRect(Math.round(tank.x - 2), Math.round(tank.y - 10), 4, 10); // I drawn its turret
+    if(tank.flip) {
+        context.translate(tank.x, 0);
+        context.scale(-1, 1);
+        context.drawImage(tankImage, 0, 1840, 165, 96, -tankWidth / 2, tank.y, tankWidth, tankHeight);
+        context.drawImage(tankImage, 485, 1523, 80, 99, -2, tank.y - 10, 4, 10);
+    } else {
+        context.drawImage(tankImage, 167, 1938, 165, 96, tank.x - tankWidth / 2, tank.y, tankWidth, tankHeight);
+        context.drawImage(tankImage, 485, 1624, 80, 99, tank.x - 2, tank.y - 10, 4, 10);
+    }
+
+    context.restore();
 }
+
+
+
+
 
 function drawTanks() {
     drawTank(tank1);
@@ -204,6 +226,7 @@ function fireTank(tank, angleDeg, power, shooter, onComplete) {
         context.arc(pos.x, pos.y, 10, 0, Math.PI * 2);
         context.fillStyle = "black";
         context.fill();
+        // context.drawImage(tankImage,426,797,34,28,pos.x,pos.y,34,28)
 
         const xi = Math.floor(pos.x);
         if (xi < 0 || xi >= canvas.width || pos.y >= (window.terrainHeight[xi] || maxHeight)) {
@@ -245,7 +268,7 @@ window.addEventListener("resize", () => {
     setupAndDraw();
 });
 
-setupAndDraw();
+// setupAndDraw();
 
 function drawWhoseTurnItIs() {
     const pointerHeight = 40;
@@ -294,3 +317,5 @@ fireButton.addEventListener("click", function (e) {
 });
 
 
+
+export { drawTank };
