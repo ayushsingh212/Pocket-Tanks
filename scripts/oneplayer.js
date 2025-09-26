@@ -108,7 +108,9 @@ const players = {
         color: "red",
         health: maxHealth,
         angle: 0, 
-        gunAngle: Math.PI * 3 / 4 
+        gunAngle: Math.PI * 3 / 4,
+        isMoving: false,
+        targetX: canvas.width - rightTankXPadding
     }
 };
 
@@ -231,6 +233,9 @@ class Projectile {
                 this.hitY = this.y;
                 this.crater(Math.floor(this.x), 18);
                 player.health = Math.max(0, player.health - damageAmount);
+                if (player === players.computer) {
+                    smoothComputer();
+                }
                 updateHud();
                 checkGameOver();
                 return;
@@ -658,26 +663,18 @@ function playerMove(dt) {
 }
 
 function update(dt) {
-    // 1. Handle tank movement animation
     tankAnim(dt);
-    
-    // 2. Update tank angles to match terrain
     updateTankAngles();
-
-    // 3. Update all active projectiles
     for (let i = projectiles.length - 1; i >= 0; i--) {
         projectiles[i].update(dt);
         if (!projectiles[i].alive && !projectiles[i].hit) {
             projectiles.splice(i, 1);
         }
     }
-
-    // 4. Handle turn logic only when the game is idle (no projectiles flying)
     if (projectiles.length === 0) {
         if (currentPlayer === 'computer') {
             computerTurn();
             currentPlayer = 'player1';
-            // Don't reset moveUsesLeft — it's a per-game budget now.
             updatePlayerControls();
         }
     }
@@ -842,18 +839,43 @@ function checkTurnReset() {
 const moveAnimationSpeed = 30;
  
 function tankAnim(dt) {
-    const player = players.player1;
+  for (let key in players) {
+    const player = players[key];
     if (!player.isMoving) {
-        return;
+        continue;
     }
     const currentX = player.x;
     const targetX = player.targetX;
     const direction = Math.sign(targetX - currentX);
-    const moveDistance = moveAnimationSpeed * dt;
+    const moveDistance = moveAnimationSpeed * dt; 
     player.x += direction * moveDistance;
     if ((direction > 0 && player.x >= targetX) || (direction < 0 && player.x <= targetX)) {
-        player.x = targetX; 
+        player.x = targetX;
         player.isMoving = false;
-        updatePlayerControls(); 
+        if (key === 'player1') {
+            updatePlayerControls();
+        }
     }
+  }
+}
+
+function smoothComputer() {
+    const minOffset = 20;
+    const maxOffset = 60;
+    let direction = Math.sign(Math.random() - 0.5);  
+    let distance = randRange(minOffset, maxOffset); 
+    let offset = direction * distance;  
+    let newX = limit(players.computer.x + offset, 0, canvas.width - 1);
+    const minSeparation = 120;
+    if (Math.abs(newX - players.player1.x) < minSeparation) {
+        if (newX > players.player1.x) {
+            newX = players.player1.x + minSeparation;
+        }
+        else {
+            newX = players.player1.x - minSeparation;
+        }
+        newX = limit(newX, 0, canvas.width - 1);
+    }
+    players.computer.targetX = newX;
+    players.computer.isMoving = true;
 }
