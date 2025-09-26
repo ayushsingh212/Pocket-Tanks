@@ -30,3 +30,11 @@ saveButton.addEventListener("click", () => {
 
   saveButton.innerText = `Saved`
 });
+const playAudio = () => {
+  console.log("I have been started playing")
+  const audio = new Audio("../resources/GAME AUDIO POCKET TANKS.m4a");
+  audio.loop = true;
+  audio.play().catch(err => console.log("Audio play blocked:", err));
+};
+
+document.addEventListener("click", playAudio);

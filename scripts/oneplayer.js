@@ -52,6 +52,8 @@ function generateMountainHeight(width, mountHeight) {
     return height;
 }
 
+const audio = new Audio("../resources/DURING MATCH SOUND.m4a")
+
 function mountainGenerate(heightArr, fillStyle, strokeStyle) {
     context.beginPath();
     context.moveTo(0, maxHeight);
@@ -436,6 +438,25 @@ powerRange.addEventListener("input", (e) => {
     aimState.currentPower = p;
     updateAimAssistFromAngle();
 });
+const playGunFire = (startTime = 0, endTime = 0.2) => {
+    const audio = new Audio("../resources/POCKET TANK GUN.m4a");
+    audio.currentTime = startTime;
+    audio.play().catch(err => console.log("Audio play blocked:", err));
+
+    const onTimeUpdate = () => {
+        if (audio.currentTime >= endTime) {
+            audio.pause();          
+            audio.currentTime = 0;  
+            audio.removeEventListener("timeupdate", onTimeUpdate);
+        }
+    };
+
+    audio.addEventListener("timeupdate", onTimeUpdate);
+};
+
+
+
+
 
 fireButton.addEventListener("click", () => {
     if (currentPlayer !== "player1") {
@@ -449,6 +470,7 @@ fireButton.addEventListener("click", () => {
     aimState.controlAiming = false;
     aimState.mousePos = null;
     currentPlayer = "computer";
+    playGunFire()
 });
 
 // space button se bhi fire hoga ab for butter user experience
@@ -468,6 +490,7 @@ document.addEventListener("keydown",(e)=>{
     aimState.controlAiming = false;
     aimState.mousePos = null;
     currentPlayer = "computer";
+      playGunFire()
 }
 
     if (e.key==="ArrowLeft")
@@ -645,7 +668,10 @@ function computerTurn() {
     players.computer.gunAngle = bestAngle;
     const startX = computer.x + Math.cos(bestAngle) * (tankWidth / 2);
     const startY = getGroundHeightAt(computer.x) - tankHeight - Math.sin(bestAngle) * (tankWidth / 2);
+  
     fireProjectile(startX, startY, bestAngle, bestPower, "computer");
+      playGunFire()
+    
 }
 
 function playerMove(dt) {
@@ -737,6 +763,8 @@ function loop(now) {
     render();
     lastTime = now;
     requestAnimationFrame(loop);
+    
+ audio.play();
 }
 requestAnimationFrame(loop);
 
