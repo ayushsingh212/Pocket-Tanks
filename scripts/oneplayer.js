@@ -570,9 +570,6 @@ canvas.addEventListener("mousedown", (e) => {
 
 canvas.addEventListener("mouseup", (e) => {
     if (aimState.isAiming) {
-        
-        console.log("I am working")
-
         const aim = aimState.shootCircle;
         const dx = aimState.mousePos.x - aim.x;
         const dy = aimState.mousePos.y - aim.y;
@@ -691,7 +688,7 @@ function render() {
     mountainGenerate(window.terrainHeight, "#0D1B2A", "#1e3c96");
     drawTank(players.player1);
     drawTank(players.computer);
-    if (aimState.isAiming || mouseDown || aimState.controlAiming) {
+    if (mouseDown) {
         const player = players.player1;
         const cx = player.x;
         const cy = getGroundHeightAt(player.x) - tankHeight / 2;
