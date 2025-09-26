@@ -1,45 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>1 Player Mode</title>
-      <link rel="stylesheet" href="../styles/mode1.css">
-          <link rel="shortcut icon" href="../resources/favicon.avif" type="image/x-icon">
-
-
+  <link rel="stylesheet" href="../styles/mode1.css">
+  <link rel="shortcut icon" href="../resources/favicon.avif" type="image/x-icon">
 </head>
-
 <body>
-  <h1>1 Player Mode</h1>
-  <p>Welcome to the 1 Player Mode!</p>
+  <h1>Welcome to the 1 Player Mode</h1>
+  <form action="">
+  <label for="player1_name">Player 1 Name:</label>
+  <input type="text" id="player1_name" name="player1_name" required><br><br>
+  <div class="playerHealth">
+    <label for="Health">Select your Health</label>
+    <input type="range" id="playerHealthValue" placeholder="Your Health" min="20" max="100" >
+  </div>  
+  <div class="helathDisplay">Health : <span id="healthV">20</span>  </div>
+    <button type="button" class="go-btn"  id="saveData" onclick="document.location='main1.html'">Go</button>
+  <div>Your opponent will be computer</div>
 
-
-  <h2>Please enter the player 1 info</h2>
-
-  <form action=""  >
-    <label for="player1_name">Player 1 Name:</label>
-    <input type="text" id="player1_name" name="player1_name" required><br><br>
-
-   
-    <div class="playerHealth">
-      <label for="Health">Select your Health</label>
-     <input type="range" id="playerHealthValue" placeholder="Your Health" min="20" max="100" >
-
-    </div>  
-    
-    <div class="helathDisplay">Health : <span id="healthV">20</span>  </div>
-     
-
-
-
-  <button type="button" class="go-btn"  id="saveData" onclick="document.location='main1.html'">Go</button>
-
-  
-
-    <div>Your opponent will be computer</div>
-    <script src="../scripts/mode1info.js" defer></script>
+  <script src="../scripts/mode1info.js"></script>
 </body>
 
 </html>

@@ -1,66 +1,57 @@
 body {
     margin: 0;
     padding: 0;
-    font-family: 'Arial', sans-serif;
-    background: linear-gradient(to bottom, #87CEEB, #F0E68C); 
+    font-family: 'Orbitron';
+    color: #f0f8ff;
+    background-color: #0c1427;
     display: flex;
-    flex-direction: column;
-    align-items: center;
     justify-content: center;
-    min-height: 100vh;
-    color: #333;
+    align-items: center;
+    height: 100vh;
+    background-image: url('b2.jpg');
+}
+
+.container {
+    text-align: center;
+    background: rgba(10, 20, 40, 0.7);
+    padding: 40px 60px;
+    border-radius: 20px;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
 }
 
 h1 {
     font-size: 3rem;
-    color: #ff4500; 
-    margin-bottom: 50px;
-    text-shadow: 2px 2px 4px #555;
+    font-weight: 900;
+    color: #FFD700;
+    margin-bottom: 40px;
 }
 
 .modeSelection {
     display: flex;
-    gap: 40px;
-    flex-wrap: wrap;
-    justify-content: center;
+    flex-direction: column;
+    gap: 20px;
 }
 
-.modeSelection button {
-    padding: 20px 50px;
-    font-size: 1.5rem;
-    font-weight: bold;
+.mode-btn {
     border: none;
-    border-radius: 15px;
-    cursor: pointer;
-    background: linear-gradient(45deg, #ff4500, #ff6347);
-    color: #fff;
-    box-shadow: 3px 3px 12px rgba(0, 0, 0, 0.3);
+    border-radius: 14px;
+    padding: 15px 30px;
+    font-size: 1.4rem;
+    font-weight: 700;
     transition: all 0.3s ease;
 }
 
-.modeSelection button:hover {
+.mode-btn:hover {
     transform: scale(1.1);
-    background: linear-gradient(45deg, #ff6347, #ff4500);
-    box-shadow: 4px 4px 15px rgba(0, 0, 0, 0.4);
 }
 
-.modeSelection button a {
-    color: #fff;
+.mode-btn:active {
+    transform: scale(0.97);
+}
+
+.mode-btn a {
     text-decoration: none;
-}
-
-@media screen and (max-width: 500px) {
-    h1 {
-        font-size: 2rem;
-        margin-bottom: 30px;
-    }
-    
-    .modeSelection {
-        gap: 20px;
-    }
-
-    .modeSelection button {
-        font-size: 1.2rem;
-        padding: 15px 30px;
-    }
+    color: #41b6dd;
+    display: block;
 }
