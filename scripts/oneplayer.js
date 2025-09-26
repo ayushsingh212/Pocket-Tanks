@@ -453,19 +453,23 @@ fireButton.addEventListener("click", () => {
 
 // space button se bhi fire hoga ab for butter user experience
 document.addEventListener("keydown",(e)=>{
-    if(e.key === " ")
-    {
-        if (currentPlayer !== "player1") {
-            return;
-        }
-        updateAimCircle();
-        const startX = leftTankX + Math.cos(aimState.currentAngle) * (tankWidth / 2);
-        const startY = getGroundHeightAt(leftTankX) - tankHeight - Math.sin(aimState.currentAngle) * (tankWidth / 2);
-        fireProjectile(startX, startY, aimState.currentAngle, aimState.currentPower, "player1");
-        aimState.controlAiming = false;
-        aimState.mousePos = null;
-        currentPlayer = "computer";
+   if(e.key === " ") {
+    if (currentPlayer !== "player1") {
+        return;
     }
+    updateAimCircle();
+
+    const player = players.player1; 
+    const startX = player.x + Math.cos(aimState.currentAngle) * (tankWidth / 2);
+    const startY = getGroundHeightAt(player.x) - tankHeight - Math.sin(aimState.currentAngle) * (tankWidth / 2);
+
+    fireProjectile(startX, startY, aimState.currentAngle, aimState.currentPower, "player1");
+
+    aimState.controlAiming = false;
+    aimState.mousePos = null;
+    currentPlayer = "computer";
+}
+
     if (e.key==="ArrowLeft")
     {   
         if(deg === 0)
