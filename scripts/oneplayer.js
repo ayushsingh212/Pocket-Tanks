@@ -8,17 +8,13 @@ const tankImg = new Image();
 tankImg.src = "../styles/tank1.png";
 
 let nameV = document.querySelector(".name");
-let playerHp = document.querySelector("#player1-hp");
-let computerHp = document.querySelector("#computer-hp");
 
-const playersInfo  = JSON.parse(localStorage.getItem("players")) || [];
+const playersInfo  = JSON.parse(localStorage.getItem("players"));
 
 let length = playersInfo.length-1;
 
 const currentUser  =  playersInfo[length];
 nameV.innerText = `${currentUser["name"]}`
-playerHp.innerText =`${currentUser["health"]}`
-computerHp.innerText = `${currentUser["health"]}`
 
 // Returns a random number between a and b.
 function randRange(a, b) {
@@ -741,13 +737,19 @@ function loop(now) {
 requestAnimationFrame(loop);
 
 function updateHud() {
-    const p1 = document.getElementById("player1-hp");
-    const comp = document.getElementById("computer-hp");
-    if (p1) {
-        p1.innerText = players.player1.health + " / " + maxHealth;
+    const p1Bar = document.getElementById("player1-hp-bar");
+    const p1Text = document.getElementById("player1-hp-text");
+    const compBar = document.getElementById("computer-hp-bar");
+    const compText = document.getElementById("computer-hp-text");
+    if (p1Bar && p1Text) {
+        const p1HealthPercent = (players.player1.health / maxHealth) * 100;
+        p1Bar.style.width = p1HealthPercent + '%';
+        p1Text.innerText = players.player1.health + " / " + maxHealth;
     }
-    if (comp) {
-        comp.innerText = players.computer.health + " / " + maxHealth;
+    if (compBar && compText) {
+        const compHealthPercent = (players.computer.health / maxHealth) * 100;
+        compBar.style.width = compHealthPercent + '%';
+        compText.innerText = players.computer.health + " / " + maxHealth;
     }
 }
 updateHud();
