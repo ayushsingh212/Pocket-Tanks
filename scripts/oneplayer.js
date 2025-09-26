@@ -688,7 +688,7 @@ function update(dt) {
 
 function render() {
     context.clearRect(0, 0, canvas.width, canvas.height);
-    mountainGenerate(window.terrainHeight, "#0a2a6c", "#1e3c96");
+    mountainGenerate(window.terrainHeight, "#0D1B2A", "#1e3c96");
     drawTank(players.player1);
     drawTank(players.computer);
     if (aimState.isAiming || mouseDown || aimState.controlAiming) {
@@ -842,7 +842,7 @@ rightMoveBtn.addEventListener('click', () => movePossible(moveStep));
 function checkTurnReset() {
     updatePlayerControls();
 }
-const moveAnimationSpeed = 150;
+const moveAnimationSpeed = 30;
  
 function tankAnim(dt) {
     const player = players.player1;
