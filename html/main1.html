@@ -6,42 +6,54 @@
     <title>Game</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../styles/style.css">
-        <link rel="shortcut icon" href="../resources/favicon.avif" type="image/x-icon">
-
+    <link rel="shortcut icon" href="../resources/favicon.avif" type="image/x-icon">
 </head>
 <body>
-      <div id="gameOverPopup" class="popup hidden">
-  <div class="popup-content">
-    <h2 id="gameOverText"></h2>
-    <button id="restartBtn">Restart</button>
-    <button id="exitBtn">Exit</button>
-  </div>
-</div>
+    <div id="gameOverPopup" class="popup hidden">
+        <div class="popup-content">
+            <h2 id="gameOverText"></h2>
+            <button id="restartBtn">Restart</button>
+            <button id="exitBtn">Exit</button>
+        </div>
+    </div>
+
     <div id="player1-hud" class="hud">
         <div class="name">Player 1</div>
-        <div class="hp">HP: <span id="player1-hp">25</span></div>
+        <div class="hp-container">
+            <div class="hp-bar-background">
+                <div id="player1-hp-bar" class="hp-bar-fill"></div>
+            </div>
+            <div id="player1-hp-text" class="hp-text">25 / 25</div>
+        </div>
     </div>
+
     <div id="computer-hud" class="hud">
         <div class="name">Computer</div>
-        <div class="hp">HP: <span id="computer-hp">25</span></div>
+        <div class="hp-container">
+            <div class="hp-bar-background">
+                <div id="computer-hp-bar" class="hp-bar-fill"></div>
+            </div>
+            <div id="computer-hp-text" class="hp-text">25 / 25</div>
+        </div>
     </div>
 
     <div id="controls-top">
         <div id="left-control" class="control">
             <label for="angleRange">Angle: <span id="angleValue">45</span></label>
             <input id="angleRange" type="range" min="0" max="180" step="0.1" />
-<div id="move-control" class="control move-control">
-  <div class="move-row">
-    <button id="move-left-btn" class="move-btn" title="Move Left">«</button>
 
-    <div class="move-center" aria-live="polite">
-      <div class="move-label">MOVE</div>
-      <div id="move-count" class="move-count">5</div>
-    </div>
+            <div id="move-control" class="control move-control">
+                <div class="move-row">
+                    <button id="move-left-btn" class="move-btn" title="Move Left">«</button>
 
-    <button id="move-right-btn" class="move-btn" title="Move Right">»</button>
-  </div>
-</div>
+                    <div class="move-center" aria-live="polite">
+                        <div class="move-label">MOVE</div>
+                        <div id="move-count" class="move-count">5</div>
+                    </div>
+
+                    <button id="move-right-btn" class="move-btn" title="Move Right">»</button>
+                </div>
+            </div>
         </div>
 
         <div id="center-control" class="control center">
@@ -56,7 +68,7 @@
     </div>
 
     <canvas id="canvas"></canvas>
-    
-    <script src="../scripts/oneplayer.js" ></script>
+
+    <script src="../scripts/oneplayer.js"></script>
 </body>
 </html>

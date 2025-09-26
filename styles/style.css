@@ -4,7 +4,6 @@ body{
   background-image: url('bkg.avif');
 }
 
-
 .gameControlArea{
   display: flex;
   justify-content: center;
@@ -159,6 +158,7 @@ body{
 #left-control {
   margin-right: auto;
   margin-left: 14vw;
+  margin-top: 10px;
 }
 
 #right-control {
@@ -273,4 +273,37 @@ body{
   font-size: 30px;   
   text-align: center;
   top: -6vh;
+}
+
+.hp-container {
+    margin-top: 6px;
+    width: 150px; 
+}
+
+.hp-bar-background {
+    width: 100%;
+    height: 12px;
+    background-color: #333; 
+    border: 1px solid #555;
+    border-radius: 6px;
+    padding: 2px; 
+    box-sizing: border-box;
+}
+
+.hp-bar-fill {
+    height: 100%;
+    width: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #d32f2f, #fdd835, #4caf50);
+    background-size: 100% 100%;
+    transition: width 0.5s ease-out;
+}
+
+.hp-text {
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 4px;
+    color: #fff;
+    text-shadow: 1px 1px 2px #000;
 }
